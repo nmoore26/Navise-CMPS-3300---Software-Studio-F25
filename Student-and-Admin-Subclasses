@@ -9,8 +9,6 @@ class Student(Account):
         self.minor = minor
 
     # Template method from Account overridden in Student
-    def display_role(self):
-        print(f"Role: Student - Name: {self.student_name}")
 
     def get_major(self):
         return self.major
@@ -24,8 +22,6 @@ class Admin(Account):
         super().__init__(username, password, email, tulaneID)
 
     # Template method from Account overridden in Admin
-    def display_role(self):
-        print(f"Role: Admin - Username: {self.username}")
 
     def updateCourse(self, course):
         print(f"Course updated: {course.get_course_name()}")
