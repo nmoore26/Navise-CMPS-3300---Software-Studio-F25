@@ -1,0 +1,27 @@
+class Student(Account):
+    def __init__(self, username, password, email, tulaneID, student_name, current_courses=None, past_courses=None, planned_schedule=None, major=None, minor=None):
+        super().__init__(username, password, email, tulaneID)
+        self.student_name = student_name
+        self.current_courses = current_courses if current_courses is not None else []
+        self.past_courses = past_courses if past_courses is not None else []
+        self.planned_schedule = planned_schedule if planned_schedule is not None else []
+        self.major = major
+        self.minor = minor
+
+    # Template method from Account overridden in Student
+
+    def get_major(self):
+        return self.major
+
+    def get_minor(self):
+        return self.minor
+
+
+class Admin(Account):
+    def __init__(self, username, password, email, tulaneID):
+        super().__init__(username, password, email, tulaneID)
+
+    # Template method from Account overridden in Admin
+
+    def updateCourse(self, course):
+        print(f"Course updated: {course.get_course_name()}")
