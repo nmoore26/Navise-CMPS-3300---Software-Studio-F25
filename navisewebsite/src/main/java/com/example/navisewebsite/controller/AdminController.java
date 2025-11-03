@@ -6,6 +6,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 
@@ -17,8 +19,8 @@ public class AdminController{
     }
 
     @PostMapping("/admin/add-course")
-    public String addCourse(@ModelAttribute Course course, Model model) {
-        courseService.add_course(course);
+    public String addCourse(@ModelAttribute Course course,@RequestParam String sheetName, Model model) {
+        courseService.add_course(course, sheetName);
 
         model.addAttribute("message", "Course added successfully!");
         model.addAttribute("course", new Course()); //bind empty Course object to the form

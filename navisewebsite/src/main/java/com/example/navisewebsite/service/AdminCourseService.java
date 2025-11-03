@@ -14,7 +14,10 @@ import org.springframework.stereotype.Service;
 import com.example.navisewebsite.domain.Course;
 import com.example.navisewebsite.domain.ICourse;
 import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
 
 
 
@@ -139,4 +142,8 @@ public class AdminCourseService implements ICourse {
 
 
     }
+    @Override
+    public List<Course> findAll() {
+        return new ArrayList<>();
+}
 }
