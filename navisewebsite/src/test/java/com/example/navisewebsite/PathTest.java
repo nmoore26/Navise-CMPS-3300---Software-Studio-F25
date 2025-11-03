@@ -70,8 +70,6 @@ public class PathTest {
         List<Course> originalCourses = Arrays.asList(math, cs);
         path.set_requirements(originalCourses);
         
-        List<Course> retrieved = path.get_requirements();
-        // This should not affect the original
         assertEquals(2, path.req_count());
     }
 }
