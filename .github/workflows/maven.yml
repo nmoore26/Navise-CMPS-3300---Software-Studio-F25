@@ -30,6 +30,11 @@ jobs:
     - name: Build with Maven
       run: mvn -B package
       working-directory: navisewebsite
+      # Run tests
+    - name: Run tests
+      run: mvn test
+      working-directory: navisewebsite
+
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Update dependency graph
