@@ -1,0 +1,10 @@
+import pandas as py
+
+def read_course(major):
+    file_path = 'src/main/resources/data/courses.xlsx'
+    major = py.read_excel(file_path,sheet_name=major)
+    print("Current Courses in",major,"Database:")
+    return major
+
+if __name__ == "__main__":
+    read_course('Africana Studies Minor')
