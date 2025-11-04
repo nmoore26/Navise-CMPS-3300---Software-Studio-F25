@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,14 +18,58 @@ public class CourseAndICourseTest {
 
     @BeforeEach
     public void setUp() {
-        math = new Course(101, "Calculus", "Dr. Smith", 3, "MATH101", "MWF", "09:00", "Gibson", 101, null);
-        cs   = new Course(102, "CS Intro", "Dr. Lee", 3, "CS101", "TTH", "10:30", "Stanley", 202, null);
-        eng  = new Course(201, "English", "Dr. Brown", 3, "ENG201", "MWF", "11:00", "Jones", 105, Arrays.asList("Language"));
+        math = new Course(
+                "101",
+                "Calculus",
+                "MATH101",
+                3,
+                "Dr. Smith",
+                "MWF",
+                "09:00",
+                "Gibson",
+                "101",
+                Arrays.asList("STEM", "Writing Intensive"),
+                Arrays.asList("MATH099"),
+                Collections.emptyList(),
+                Arrays.asList("Fall", "Spring")
+        );
+
+        cs = new Course(
+                "102",
+                "CS Intro",
+                "CS101",
+                3,
+                "Dr. Lee",
+                "TTH",
+                "10:30",
+                "Stanley",
+                "202",
+                Collections.singletonList("STEM"),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Arrays.asList("Fall")
+        );
+
+        eng = new Course(
+                "201",
+                "English",
+                "ENG201",
+                3,
+                "Dr. Brown",
+                "MWF",
+                "11:00",
+                "Jones",
+                "105",
+                Collections.emptyList(),
+                Arrays.asList("ENG101"),
+                Arrays.asList("ENG102"),
+                Arrays.asList("Spring")
+        );
     }
 
     @Test
-    public void testCourseGetters() {
-        assertEquals(101, math.get_courseID());
+    public void testCourseGettersReflectNewFields() {
+        assertEquals("101", math.get_courseID());
         assertEquals("Calculus", math.get_course_name());
         assertEquals("Dr. Smith", math.get_professor_name());
         assertEquals(3, math.get_credit_hours());
@@ -34,103 +77,114 @@ public class CourseAndICourseTest {
         assertEquals("MWF", math.get_days_offered());
         assertEquals("09:00", math.get_time());
         assertEquals("Gibson", math.get_building());
-        assertEquals(101, math.get_room_number());
-        assertTrue(math.get_attribute().isEmpty());
+        assertEquals("101", math.get_room_number());
 
-        assertEquals(Collections.singletonList("Language"), eng.get_attribute());
+        assertEquals(Arrays.asList("STEM", "Writing Intensive"), math.get_attribute());
+        assertEquals(Collections.singletonList("MATH099"), math.get_prerequisites());
+        assertEquals(Collections.emptyList(), math.get_corequisites());
+        assertEquals(Arrays.asList("Fall", "Spring"), math.get_term_offered());
     }
 
     @Test
-    public void testCourseAttributeDefensiveCopyAndImmutability() {
+    public void testListFieldsAreDefensivelyCopiedAndUnmodifiable() {
         List<String> attrs = new ArrayList<>(Arrays.asList("Lab", "Project"));
-        Course withAttrs = new Course(301, "Physics", "Dr. Newton", 4, "PHYS301", "MWF", "14:00", "Hall", 12, attrs);
+        List<String> pres  = new ArrayList<>(Collections.singletonList("PHYS101"));
+        List<String> cores = new ArrayList<>(Collections.singletonList("MATH201"));
+        List<String> terms = new ArrayList<>(Arrays.asList("Summer"));
 
-        //Mutate original list; Course should be unaffected
+        Course physics = new Course(
+                "301",
+                "Physics",
+                "PHYS301",
+                4,
+                "Dr. Newton",
+                "MWF",
+                "14:00",
+                "Hall",
+                "012",
+                attrs, pres, cores, terms
+        );
+
+        //cahnge original lists after construction
         attrs.add("Extra");
-        assertEquals(Arrays.asList("Lab", "Project"), withAttrs.get_attribute());
+        pres.clear();
+        cores.add("CHEM101");
+        terms.add("Fall");
 
-        //Returned list should be unmodifiable
-        List<String> returned = withAttrs.get_attribute();
-        assertThrows(UnsupportedOperationException.class, () -> returned.add("Oops"));
+        assertEquals(Arrays.asList("Lab", "Project"), physics.get_attribute());
+        assertEquals(Collections.singletonList("PHYS101"), physics.get_prerequisites());
+        assertEquals(Collections.singletonList("MATH201"), physics.get_corequisites());
+        assertEquals(Collections.singletonList("Summer"), physics.get_term_offered());
+
+        //cant modify returned lists
+        assertThrows(UnsupportedOperationException.class, () -> physics.get_attribute().add("X"));
+        assertThrows(UnsupportedOperationException.class, () -> physics.get_prerequisites().add("X"));
+        assertThrows(UnsupportedOperationException.class, () -> physics.get_corequisites().add("X"));
+        assertThrows(UnsupportedOperationException.class, () -> physics.get_term_offered().add("X"));
     }
 
     @Test
-    public void testICourseBasicOperations() throws IOException {
+    public void testICourse_SheetScopedCRUD_andFindAll() throws IOException {
         ICourse repo = new InMemoryCourseRepo();
 
-        //Initially empty
         assertTrue(repo.findAll().isEmpty());
 
-        //Simulate "loading from CSV" by filename hint
-        repo.add_course("seed_math.csv");//adds a Math course with id 1
-        repo.add_course("seed_cs.csv");//adds a CS course with id 2
-        assertEquals(2, repo.findAll().size());
+        //add to two different sheets
+        repo.add_course(math, "SheetA");
+        repo.add_course(cs,   "SheetA");
+        repo.add_course(eng,  "SheetB");
 
-        //Add a real course via the test double's helper
-        ((InMemoryCourseRepo) repo).put(math);
-        ((InMemoryCourseRepo) repo).put(cs);
-        ((InMemoryCourseRepo) repo).put(eng);
+        //findById is sheet-aware
+        assertTrue(repo.findById("101", "SheetA").isPresent());
+        assertFalse(repo.findById("101", "SheetB").isPresent()); // same id absent on SheetB
+        assertEquals("Calculus", repo.findById("101", "SheetA").get().get_course_name());
 
-        //Verify findById and findAll
-        assertTrue(repo.findById(101).isPresent());
-        assertEquals("Calculus", repo.findById(101).get().get_course_name());
-        assertFalse(repo.findById(9999).isPresent());
+        //remove only affects the specified sheet
+        repo.remove_course("102", "SheetA"); // remove CS on SheetA
+        assertFalse(repo.findById("102", "SheetA").isPresent());
 
-        //Remove by id
-        repo.remove_course(102); //remove "CS Intro"
-        assertFalse(repo.findById(102).isPresent());
+        //still present elsewhere (ENG on SheetB)
+        assertTrue(repo.findById("201", "SheetB").isPresent());
 
-        //sanity on remaining count (2 seeded + 2 remaining from custom puts = 4)
-        assertEquals(4, repo.findAll().size());
+        //findAll returns all courses across sheets
+        List<Course> all = repo.findAll();
+        //remaining: math (SheetA) + eng (SheetB) = 2
+        assertEquals(2, all.size());
+        assertTrue(all.stream().anyMatch(c -> c.get_courseID().equals("101")));
+        assertTrue(all.stream().anyMatch(c -> c.get_courseID().equals("201")));
     }
 
-
-    
-    //Simple in-memory test double for ICourse.
     private static class InMemoryCourseRepo implements ICourse {
-        private final Map<Integer, Course> store = new HashMap<>();
-        private final AtomicInteger syntheticId = new AtomicInteger(0);
+        private final Map<String, Map<String, Course>> store = new HashMap<>();
 
         @Override
-        public void add_course(String file_name) throws IOException {
-            //In a real impl, read CSV. For tests, add a synthetic course based on filename hint.
-            int id = syntheticId.incrementAndGet();
-            String name = file_name.toLowerCase().contains("cs") ? "CS Seed" : "Math Seed";
-            String code = file_name.toLowerCase().contains("cs") ? "CS-SEED" : "MATH-SEED";
-
-            Course c = new Course(
-                    id,
-                    name,
-                    "Test Prof",
-                    3,
-                    code,
-                    "MWF",
-                    "08:00",
-                    "Test Hall",
-                    1,
-                    Collections.singletonList("Seeded")
-            );
-            store.put(c.get_courseID(), c);
+        public void add_course(Course course, String sheet_name) throws IOException {
+            store.computeIfAbsent(sheet_name, k -> new LinkedHashMap<>())
+                 .put(course.get_courseID(), course);
         }
 
         @Override
-        public void remove_course(int courseID) {
-            store.remove(courseID);
+        public void remove_course(String courseID, String sheetName) {
+            Map<String, Course> sheet = store.get(sheetName);
+            if (sheet != null) {
+                sheet.remove(courseID);
+                if (sheet.isEmpty()) store.remove(sheetName);
+            }
         }
 
         @Override
-        public Optional<Course> findById(int id) {
-            return Optional.ofNullable(store.get(id));
+        public Optional<Course> findById(String id, String sheet_name) {
+            Map<String, Course> sheet = store.get(sheet_name);
+            return Optional.ofNullable(sheet == null ? null : sheet.get(id));
         }
 
         @Override
-        public Collection<Course> findAll() {
-            return Collections.unmodifiableCollection(store.values());
-        }
-
-        //Helper for tests to insert specific courses
-        void put(Course c) {
-            store.put(c.get_courseID(), c);
+        public List<Course> findAll() {
+            List<Course> all = new ArrayList<>();
+            for (Map<String, Course> sheet : store.values()) {
+                all.addAll(sheet.values());
+            }
+            return Collections.unmodifiableList(all);
         }
     }
 }
