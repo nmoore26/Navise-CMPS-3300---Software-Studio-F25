@@ -85,6 +85,7 @@ public class CourseAndICourseTest {
     }
 
 
+    
     //Simple in-memory test double for ICourse.
     private static class InMemoryCourseRepo implements ICourse {
         private final Map<Integer, Course> store = new HashMap<>();
@@ -132,4 +133,5 @@ public class CourseAndICourseTest {
             store.put(c.get_courseID(), c);
         }
     }
+}
 }
