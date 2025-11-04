@@ -24,11 +24,57 @@ class MajorMinorTest {
     
 @BeforeEach
     public void setUp() {
-        math = new Course(101, "Calculus", "Dr. Smith", 3, "MATH101", "MWF", "9:00", "Gibson", 101, null);
-        cs = new Course(102, "CS Intro", "Dr. Lee", 3, "CS101", "TTH", "10:30", "Stanley", 202, null);
-        eng = new Course(201, "English", "Dr. Brown", 3, "ENG201", "MWF", "11:00", "Jones", 105, null);
+
+        math = new Course(
+                "101",
+                "Calculus",
+                "MATH101",
+                3,
+                "Dr. Smith",
+                "MWF",
+                "9:00",
+                "Gibson",
+                "101",
+                null,
+                null,
+                null,
+                null
+        );
+
+        cs = new Course(
+                "102",
+                "CS Intro",
+                "CS101",
+                3,
+                "Dr. Lee",
+                "TTH",
+                "10:30",
+                "Stanley",
+                "202",
+                null,
+                null,
+                null,
+                null
+        );
+
+        eng = new Course(
+                "201", 
+                "English",
+                "ENG201",
+                3,
+                "Dr. Brown",
+                "MWF",
+                "11:00",
+                "Jones",
+                "105",
+                null,
+                null,
+                null,
+                null
+        );
+
         student = new Student("student@tulane.edu", "pass");
-        admin = new Admin("admin@admin.com", "admin");
+        admin   = new Admin("admin@admin.com", "admin");
     }
     
     @Test
@@ -59,8 +105,36 @@ class MajorMinorTest {
         Minor mathMinor = new Minor("Mathematics", 15);
         List<Course> withinLimit = Arrays.asList(math, cs, eng); // 9 hours
         
-        Course advanced = new Course(401, "Advanced", "Dr. King", 4, "MATH401", "MWF", "9:00", "Gibson", 401, null);
-        Course research = new Course(402, "Research", "Dr. Queen", 4, "MATH402", "TTH", "10:30", "Stanley", 402, null);
+        Course advanced = new Course(
+            "401",
+            "Advanced",
+            "MATH401",
+            4,
+            "Dr. King",
+            "MWF",
+            "9:00",
+            "Gibson",
+            "401",
+            null,
+            null,
+            null,
+            null
+        );
+        Course research = new Course(
+            "402",
+            "Research",
+            "MATH402",
+            4,
+            "Dr. Queen",
+            "TTH",
+            "10:30",
+            "Stanley",
+            "402",
+            null,
+            null,
+            null,
+            null
+        );
         List<Course> overLimit = Arrays.asList(math, cs, eng, advanced, research); // 17 hours
         
         assertTrue(mathMinor.within_limit(withinLimit));
@@ -105,7 +179,21 @@ class MajorMinorTest {
     @Test
     public void testAdminCurriculumManagement() {
         Major physics = new Major("Physics");
-        Course quantum = new Course(501, "Quantum", "Dr. Atom", 4, "PHYS501", "MWF", "1:00", "Science", 501, null);
+        Course quantum = new Course(
+            "501",
+            "Quantum",
+            "PHYS501",
+            4,
+            "Dr. Atom",
+            "MWF",
+            "1:00",
+            "Science",
+            "501",
+            null,
+            null,
+            null,
+            null
+        );
         
         assertTrue(admin.add_major_req(physics, quantum));
         assertTrue(admin.set_major_hours(physics, 36));

@@ -19,9 +19,53 @@ public class PathTest {
     
     @BeforeEach
     public void setUp() {
-        math = new Course(101, "Calculus", "Dr. Smith", 3, "MATH101", "MWF", "9:00", "Gibson", 101, null);
-        cs = new Course(102, "CS Intro", "Dr. Lee", 3, "CS101", "TTH", "10:30", "Stanley", 202, null);
-        eng = new Course(201, "English", "Dr. Brown", 3, "ENG201", "MWF", "11:00", "Jones", 105, null);
+        math = new Course(
+                "101",
+                "Calculus",
+                "MATH101",
+                3,
+                "Dr. Smith",
+                "MWF",
+                "9:00",
+                "Gibson",
+                "101",
+                null,
+                null,
+                null,
+                null
+        );
+
+        cs = new Course(
+                "102",
+                "CS Intro",
+                "CS101",
+                3,
+                "Dr. Lee",
+                "TTH",
+                "10:30",
+                "Stanley",
+                "202",
+                null,
+                null,
+                null,
+                null
+        );
+
+        eng = new Course(
+                "201",
+                "English",
+                "ENG201",
+                3,
+                "Dr. Brown",
+                "MWF",
+                "11:00",
+                "Jones",
+                "105",
+                null,
+                null,
+                null,
+                null
+        );
     }
     
     @Test
