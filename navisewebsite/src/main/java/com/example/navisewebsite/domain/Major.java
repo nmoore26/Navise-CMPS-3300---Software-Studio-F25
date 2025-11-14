@@ -3,58 +3,64 @@ package com.example.navisewebsite.domain;
 import java.util.List;
 
 public class Major extends Path {
-    private int min_hours;
+    private static final int DEFAULT_MIN_HOURS = 30;
+    private int minHours;
     
     public Major() {
         super();
-        this.min_hours = 30;
+        this.minHours = DEFAULT_MIN_HOURS;
     }
     
-    public Major(String path_name) {
-        super(path_name);
-        this.min_hours = 30;
+    public Major(String pathName) {
+        super(pathName);
+        this.minHours = DEFAULT_MIN_HOURS;
     }
     
-    public Major(String path_name, int min_hours) {
-        super(path_name);
-        this.min_hours = min_hours;
+    public Major(String pathName, int minHours) {
+        super(pathName);
+        this.minHours = minHours;
     }
     
-    public Major(String path_name, List<Course> requirements, int min_hours) {
-        super(path_name, requirements);
-        this.min_hours = min_hours;
+    public Major(String pathName, List<Course> requirements, int minHours) {
+        super(pathName, requirements);
+        this.minHours = minHours;
     }
     
-    public int get_min_hours() { return min_hours; }
-    public void set_min_hours(int min_hours) { this.min_hours = min_hours; }
+    public int getMinHours() { 
+        return minHours; 
+    }
     
-    // FIXED BUSINESS METHODS
-    public boolean meets_reqs(List<Course> completed) {
-        if (completed == null || get_requirements().isEmpty()) return false;
-        
-        // Check if ALL required courses are completed
-        for (Course required : get_requirements()) {
-            if (!completed.contains(required)) {
-                return false;
-            }
+    public void setMinHours(int minHours) { 
+        this.minHours = minHours; 
+    }
+    
+    // Business logic methods - now using parent class helpers
+    public boolean meetsRequirements(List<Course> completed) {
+        if (completed == null || getRequirements().isEmpty()) {
+            return false;
         }
-        return true;
-    }
-    
-    public int hours_needed(List<Course> completed) {
-        if (completed == null) return min_hours;
         
-        // Count hours from required courses that are NOT completed
-        int needed = 0;
-        for (Course required : get_requirements()) {
-            if (!completed.contains(required)) {
-                needed += required.get_credit_hours();
-            }
-        }
-        return needed;
+        // All required courses must be completed
+        List<Course> uncompleted = getUncompletedRequirements(completed);
+        return uncompleted.isEmpty();
     }
     
-    public boolean can_graduate(List<Course> completed) {
-        return meets_reqs(completed);
+    public int getHoursNeeded(List<Course> completed) {
+        List<Course> uncompleted = getUncompletedRequirements(completed);
+        return calculateTotalHours(uncompleted);
+    }
+    
+    public int getCompletedHours(List<Course> completed) {
+        List<Course> completedReqs = getCompletedRequirements(completed);
+        return calculateTotalHours(completedReqs);
+    }
+    
+    public boolean canGraduate(List<Course> completed) {
+        return meetsRequirements(completed) && 
+               getCompletedHours(completed) >= minHours;
+    }
+    
+    public boolean meetsMinimumHours(List<Course> completed) {
+        return getCompletedHours(completed) >= minHours;
     }
 }

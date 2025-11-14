@@ -3,50 +3,68 @@ package com.example.navisewebsite.domain;
 import java.util.List;
 
 public class Minor extends Path {
-    private int max_hours;
+    private static final int DEFAULT_MAX_HOURS = 18;
+    private int maxHours;
     
     public Minor() {
         super();
-        this.max_hours = 18; // default
+        this.maxHours = DEFAULT_MAX_HOURS;
     }
     
-    public Minor(String path_name) {
-        super(path_name);
-        this.max_hours = 18;
+    public Minor(String pathName) {
+        super(pathName);
+        this.maxHours = DEFAULT_MAX_HOURS;
     }
     
-    public Minor(String path_name, int max_hours) {
-        super(path_name);
-        this.max_hours = max_hours; // Use the parameter
+    public Minor(String pathName, int maxHours) {
+        super(pathName);
+        this.maxHours = maxHours;
     }
     
-    public Minor(String path_name, List<Course> requirements, int max_hours) {
-        super(path_name, requirements);
-        this.max_hours = max_hours;
+    public Minor(String pathName, List<Course> requirements, int maxHours) {
+        super(pathName, requirements);
+        this.maxHours = maxHours;
     }
     
-    public int get_max_hours() { return max_hours; }
-    public void set_max_hours(int max_hours) { this.max_hours = max_hours; }
-    
-    // Business methods
-    public boolean within_limit(List<Course> completed) {
-        if (completed == null) return true;
-        int completed_hours = completed.stream()
-                .mapToInt(Course::get_credit_hours)
-                .sum();
-        return completed_hours <= max_hours;
+    public int getMaxHours() { 
+        return maxHours; 
     }
     
-    public int hours_remaining(List<Course> completed) {
-        if (completed == null) return max_hours;
-        int completed_hours = completed.stream()
-                .mapToInt(Course::get_credit_hours)
-                .sum();
-        return Math.max(0, max_hours - completed_hours);
+    public void setMaxHours(int maxHours) { 
+        this.maxHours = maxHours; 
     }
     
-    public boolean is_complete(List<Course> completed) {
-        if (completed == null) return false;
-        return !completed.isEmpty() && within_limit(completed);
+    // Business logic methods - now using parent class helpers
+    public boolean isWithinLimit(List<Course> completed) {
+        int completedHours = getCompletedHours(completed);
+        return completedHours <= maxHours;
+    }
+    
+    public int getHoursRemaining(List<Course> completed) {
+        int completedHours = getCompletedHours(completed);
+        return Math.max(0, maxHours - completedHours);
+    }
+    
+    public int getCompletedHours(List<Course> completed) {
+        List<Course> completedReqs = getCompletedRequirements(completed);
+        return calculateTotalHours(completedReqs);
+    }
+    
+    public boolean isComplete(List<Course> completed) {
+        if (completed == null || completed.isEmpty()) {
+            return false;
+        }
+        
+        // Minor is complete if all requirements met and within hour limit
+        List<Course> uncompleted = getUncompletedRequirements(completed);
+        return uncompleted.isEmpty() && isWithinLimit(completed);
+    }
+    
+    public boolean meetsRequirements(List<Course> completed) {
+        if (completed == null || getRequirements().isEmpty()) {
+            return false;
+        }
+        List<Course> uncompleted = getUncompletedRequirements(completed);
+        return uncompleted.isEmpty();
     }
 }

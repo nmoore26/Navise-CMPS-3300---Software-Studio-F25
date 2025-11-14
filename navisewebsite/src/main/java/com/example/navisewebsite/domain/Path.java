@@ -3,56 +3,96 @@ package com.example.navisewebsite.domain;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Path {
-    private String path_name;
+    private String pathName;
     private List<Course> requirements;
     
     public Path() {
         this.requirements = new ArrayList<>();
     }
     
-    public Path(String path_name) {
+    public Path(String pathName) {
         this();
-        this.path_name = path_name;
+        this.pathName = pathName;
     }
     
-    public Path(String path_name, List<Course> requirements) {
-        this.path_name = path_name;
+    public Path(String pathName, List<Course> requirements) {
+        this.pathName = pathName;
         this.requirements = (requirements != null) ? new ArrayList<>(requirements) : new ArrayList<>();
     }
     
-    public String get_path_name() { return path_name; }
-    public List<Course> get_requirements() { return Collections.unmodifiableList(requirements); }
+    // Getters and Setters with Java conventions
+    public String getPathName() { 
+        return pathName; 
+    }
     
-    public void set_path_name(String path_name) { this.path_name = path_name; }
-    public void set_requirements(List<Course> requirements) { 
+    public List<Course> getRequirements() { 
+        return Collections.unmodifiableList(requirements); 
+    }
+    
+    public void setPathName(String pathName) { 
+        this.pathName = pathName; 
+    }
+    
+    public void setRequirements(List<Course> requirements) { 
         this.requirements = new ArrayList<>(requirements); 
     }
     
-    public void add_req(Course c) {
-        if (c != null) requirements.add(c);
+    // Course management methods
+    public void addRequirement(Course course) {
+        if (course != null) {
+            requirements.add(course);
+        }
     }
     
-    public boolean rm_req(Course c) {
-        return requirements.remove(c);
+    public boolean removeRequirement(Course course) {
+        return requirements.remove(course);
     }
     
-    public boolean has_req(Course c) {
-        return requirements.contains(c);
+    public boolean hasRequirement(Course course) {
+        return requirements.contains(course);
     }
     
-    public int total_hours() {
-        return requirements.stream()
-                .mapToInt(Course::get_credit_hours)
-                .sum();
+    // Hour calculation methods - extracted for reuse
+    public int getTotalRequiredHours() {
+        return calculateTotalHours(requirements);
     }
     
-    public int req_count() {
+    public int getRequirementCount() {
         return requirements.size();
     }
     
-    public boolean is_empty() {
+    public boolean isEmpty() {
         return requirements.isEmpty();
+    }
+    
+    // Protected helper methods for subclasses
+    protected List<Course> getUncompletedRequirements(List<Course> completed) {
+        if (completed == null) {
+            return new ArrayList<>(requirements);
+        }
+        return requirements.stream()
+                .filter(req -> !completed.contains(req))
+                .collect(Collectors.toList());
+    }
+    
+    protected List<Course> getCompletedRequirements(List<Course> completed) {
+        if (completed == null) {
+            return new ArrayList<>();
+        }
+        return requirements.stream()
+                .filter(completed::contains)
+                .collect(Collectors.toList());
+    }
+    
+    protected int calculateTotalHours(List<Course> courses) {
+        if (courses == null) {
+            return 0;
+        }
+        return courses.stream()
+                .mapToInt(Course::get_credit_hours)
+                .sum();
     }
 }
