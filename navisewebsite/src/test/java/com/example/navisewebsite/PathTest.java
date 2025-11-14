@@ -1,10 +1,8 @@
 package com.example.navisewebsite;
 
 import org.junit.jupiter.api.Test;
-
 import com.example.navisewebsite.domain.Course;
 import com.example.navisewebsite.domain.Path;
-
 import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -71,49 +69,49 @@ public class PathTest {
     @Test
     public void testPathCourseManagement() {
         Path path = new Path("Science");
-        path.add_req(math);
-        path.add_req(cs);
+        path.addRequirement(math);
+        path.addRequirement(cs);
         
-        assertEquals(2, path.req_count());
-        assertTrue(path.has_req(cs));
+        assertEquals(2, path.getRequirementCount());
+        assertTrue(path.hasRequirement(cs));
         
-        assertTrue(path.rm_req(math));
-        assertEquals(1, path.req_count());
-        assertFalse(path.has_req(math));
+        assertTrue(path.removeRequirement(math));
+        assertEquals(1, path.getRequirementCount());
+        assertFalse(path.hasRequirement(math));
     }
     
     @Test
     public void testPathCreditHourCalculation() {
         Path path = new Path("Test Path");
-        path.add_req(math);
-        path.add_req(cs);
-        path.add_req(eng);
+        path.addRequirement(math);
+        path.addRequirement(cs);
+        path.addRequirement(eng);
         
-        assertEquals(9, path.total_hours());
+        assertEquals(9, path.getTotalRequiredHours());
     }
     
     @Test
     public void testEmptyPathBehavior() {
         Path path = new Path("Empty Path");
-        assertTrue(path.is_empty());
-        assertEquals(0, path.total_hours());
+        assertTrue(path.isEmpty());
+        assertEquals(0, path.getTotalRequiredHours());
     }
     
     @Test
     public void testPathRequirementValidation() {
         Path path = new Path("Validation Test");
-        path.add_req(math);
+        path.addRequirement(math);
         
-        assertTrue(path.has_req(math));
-        assertFalse(path.has_req(cs));
+        assertTrue(path.hasRequirement(math));
+        assertFalse(path.hasRequirement(cs));
     }
     
     @Test
     public void testPathDataIntegrity() {
         Path path = new Path("Data Integrity");
         List<Course> originalCourses = Arrays.asList(math, cs);
-        path.set_requirements(originalCourses);
+        path.setRequirements(originalCourses);
         
-        assertEquals(2, path.req_count());
+        assertEquals(2, path.getRequirementCount());
     }
 }
