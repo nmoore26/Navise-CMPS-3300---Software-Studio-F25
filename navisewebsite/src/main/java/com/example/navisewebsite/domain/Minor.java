@@ -68,3 +68,5 @@ public class Minor extends Path {
         return uncompleted.isEmpty();
     }
 }
+
+//change to commit+push minor

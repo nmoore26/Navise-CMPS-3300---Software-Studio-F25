@@ -64,3 +64,5 @@ public class Major extends Path {
         return getCompletedHours(completed) >= minHours;
     }
 }
+
+//change to commit+push major
