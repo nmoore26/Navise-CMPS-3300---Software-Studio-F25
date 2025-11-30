@@ -5,7 +5,6 @@ import com.example.navisewebsite.domain.Course;
 import com.example.navisewebsite.domain.Path;
 import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,51 +17,18 @@ public class PathTest {
     @BeforeEach
     public void setUp() {
         math = new Course(
-                "101",
-                "Calculus",
-                "MATH101",
-                3,
-                "Dr. Smith",
-                "MWF",
-                "9:00",
-                "Gibson",
-                "101",
-                null,
-                null,
-                null,
-                null
+                "101", "Calculus", "MATH101", 3, "Dr. Smith",
+                "MWF", "9:00", "Gibson", "101", null, null, null, null
         );
 
         cs = new Course(
-                "102",
-                "CS Intro",
-                "CS101",
-                3,
-                "Dr. Lee",
-                "TTH",
-                "10:30",
-                "Stanley",
-                "202",
-                null,
-                null,
-                null,
-                null
+                "102", "CS Intro", "CS101", 3, "Dr. Lee",
+                "TTH", "10:30", "Stanley", "202", null, null, null, null
         );
 
         eng = new Course(
-                "201",
-                "English",
-                "ENG201",
-                3,
-                "Dr. Brown",
-                "MWF",
-                "11:00",
-                "Jones",
-                "105",
-                null,
-                null,
-                null,
-                null
+                "201", "English", "ENG201", 3, "Dr. Brown",
+                "MWF", "11:00", "Jones", "105", null, null, null, null
         );
     }
     
