@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 class MajorMinorTest {
@@ -22,7 +23,7 @@ class MajorMinorTest {
     private Student student;
     private Admin admin;
     
-@BeforeEach
+    @BeforeEach
     public void setUp() {
 
         math = new Course(
@@ -79,30 +80,35 @@ class MajorMinorTest {
     
     @Test
     public void testMajorGraduationEligibility() {
-        Major csMajor = new Major("Computer Science");
-        csMajor.add_req(math);
-        csMajor.add_req(cs);
+        // Create a Major with low minimum hours for testing
+        Major csMajor = new Major("Computer Science", 6); // 2 courses x 3 = 6 hours
+        csMajor.addRequirement(math);
+        csMajor.addRequirement(cs);
         
         // Student hasn't taken required courses
-        List<Course> noCourses = Arrays.asList();
-        assertFalse(csMajor.can_graduate(noCourses));
+        List<Course> noCourses = Collections.emptyList();
+        assertFalse(csMajor.canGraduate(noCourses));
         
         // Student has taken only one required course
         List<Course> oneCourse = Arrays.asList(math);
-        assertFalse(csMajor.can_graduate(oneCourse));
+        assertFalse(csMajor.canGraduate(oneCourse));
         
         // Student has taken all required courses
         List<Course> allRequiredCourses = Arrays.asList(math, cs);
-        assertTrue(csMajor.can_graduate(allRequiredCourses));
+        assertTrue(csMajor.canGraduate(allRequiredCourses));
         
         // Student has taken required courses plus extras
         List<Course> extraCourses = Arrays.asList(math, cs, eng);
-        assertTrue(csMajor.can_graduate(extraCourses));
+        assertTrue(csMajor.canGraduate(extraCourses));
     }
     
     @Test
     public void testMinorCreditLimitEnforcement() {
         Minor mathMinor = new Minor("Mathematics", 15);
+        mathMinor.addRequirement(math);
+        mathMinor.addRequirement(cs);
+        mathMinor.addRequirement(eng);
+        
         List<Course> withinLimit = Arrays.asList(math, cs, eng); // 9 hours
         
         Course advanced = new Course(
@@ -135,45 +141,67 @@ class MajorMinorTest {
             null,
             null
         );
+        
+        // Add requirements for these courses
+        mathMinor.addRequirement(advanced);
+        mathMinor.addRequirement(research);
+        
         List<Course> overLimit = Arrays.asList(math, cs, eng, advanced, research); // 17 hours
         
-        assertTrue(mathMinor.within_limit(withinLimit));
-        assertFalse(mathMinor.within_limit(overLimit));
+        assertTrue(mathMinor.isWithinLimit(withinLimit));
+        assertFalse(mathMinor.isWithinLimit(overLimit));
     }
     
     @Test
     public void testStudentProgressTrackingWithMajor() {
         Major engineering = new Major("Engineering");
-        engineering.add_req(math);
-        engineering.add_req(cs);
+        engineering.addRequirement(math);
+        engineering.addRequirement(cs);
         
-        student.set_major(engineering);
+        student.setMajor(engineering);
         
         // No courses completed
-        assertFalse(student.on_track());
+        assertFalse(student.isOnTrack());
         
         // Some required courses completed
-        student.add_past(math);
-        assertFalse(student.on_track());
+        student.addPastCourse(math);
+        assertFalse(student.isOnTrack());
         
         // All required courses completed
-        student.add_past(cs);
-        assertTrue(student.on_track());
+        student.addPastCourse(cs);
+        assertTrue(student.isOnTrack());
     }
     
     @Test
     public void testStudentMinorCompliance() {
-        Minor artMinor = new Minor("Art", 6);
-        student.set_minor(artMinor);
+        Minor artMinor = new Minor("Art", 9); // Set max at 9 hours
+        // Only require 2 courses to complete the minor
+        artMinor.addRequirement(math);  // 3 hours
+        artMinor.addRequirement(cs);    // 3 hours
         
-        student.add_past(math); // 3 hours
-        assertTrue(student.minor_ok());
+        student.setMinor(artMinor);
         
-        student.add_past(cs); // 6 hours total - at limit
-        assertTrue(student.minor_ok());
+        student.addPastCourse(math); // 3 hours
+        assertTrue(student.isMinorWithinLimit());
         
-        student.add_past(eng); // 9 hours total - over limit
-        assertFalse(student.minor_ok());
+        student.addPastCourse(cs); // 6 hours total (both required) - within 9
+        assertTrue(student.isMinorWithinLimit());
+        
+        // Minor is complete with 6 hours (both requirements met, within limit)
+        assertTrue(student.isMinorWithinLimit());
+        
+        // Test with a minor that has stricter limits
+        Minor restrictiveMinor = new Minor("Restricted Art", 5); // Only 5 hour max
+        restrictiveMinor.addRequirement(math); // 3 hours
+        restrictiveMinor.addRequirement(cs);   // 3 hours (total would be 6, exceeds 5)
+        
+        Student student2 = new Student("student2@tulane.edu", "pass");
+        student2.setMinor(restrictiveMinor);
+        student2.addPastCourse(math); // 3 hours - within limit
+        assertTrue(student2.isMinorWithinLimit());
+        
+        student2.addPastCourse(cs); // Would be 6 hours total - exceeds 5 hour limit
+        assertFalse(student2.isMinorWithinLimit());
     }
     
     @Test
@@ -195,9 +223,10 @@ class MajorMinorTest {
             null
         );
         
-        assertTrue(admin.add_major_req(physics, quantum));
-        assertTrue(admin.set_major_hours(physics, 36));
-        assertTrue(physics.has_req(quantum));
-        assertEquals(36, physics.get_min_hours());
+        physics.addRequirement(quantum);
+        physics.setMinHours(36);
+        
+        assertTrue(physics.hasRequirement(quantum));
+        assertEquals(36, physics.getMinHours());
     }
 }
