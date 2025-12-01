@@ -4,25 +4,72 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-
 /*
-The purpose of the DatabaseUtil class is to provide utility methods for connecting to the SQLite database
-and initializing the database schema by creating necessary tables if they do not already exist.
+The purpose of the DatabaseUtil class is to manage database connections and initialize
+the SQLite database schema for the application. It provides methods to connect to either
+the production or test database and to create necessary tables if they do not exist.
 */
+
 public class DatabaseUtil {
 
-    private static final String DB_URL = "jdbc:sqlite:courses.db";
+    // --- Production DB ---
+    private static final String PROD_DB_URL = "jdbc:sqlite:courses.db";
 
-    // Connect to the SQLite DB
-    public static Connection connect() throws SQLException {
-        return DriverManager.getConnection(DB_URL);
+    // --- Test DB (shared in-memory) ---
+    // Use a file: URI with mode=memory and cache=shared so multiple connections
+    // within the same process see the same in-memory database.
+    private static final String TEST_DB_URL = "jdbc:sqlite:file:memdb?mode=memory&cache=shared";
+    private static boolean useTestDB = false;
+    // Keep a single persistent "keeper" connection open for the in-memory
+    // test DB so it persists for the duration of the test run.
+    private static Connection testKeeper = null;
+
+    // --- Switching flag for tests ---
+    public static void useTestDatabase() {
+        useTestDB = true;
+        // Ensure the shared test connection is opened and kept alive
+        try {
+            if (testKeeper == null || testKeeper.isClosed()) {
+                testKeeper = DriverManager.getConnection(TEST_DB_URL);
+                // Register shutdown hook to close the keeper when JVM exits
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    closeTestDatabase();
+                }));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    // Initialize database tables
+    /**
+     * Close the persistent test keeper connection if open. Safe to call multiple times.
+     */
+    public static void closeTestDatabase() {
+        try {
+            if (testKeeper != null && !testKeeper.isClosed()) {
+                testKeeper.close();
+                testKeeper = null;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // --- Universal connect method ---
+    public static Connection connect() throws SQLException {
+        if (useTestDB) {
+            // Return a fresh connection to the shared in-memory database.
+            return DriverManager.getConnection(TEST_DB_URL);
+        }
+        return DriverManager.getConnection(PROD_DB_URL);
+    }
+
+    // =====================================================================
+    // PRODUCTION DATABASE INITIALIZER
+    // =====================================================================
     public static void initializeDatabase() {
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
 
-            // ---- Courses table ----
             String createCourses = """
                 CREATE TABLE IF NOT EXISTS courses (
                     course_id TEXT PRIMARY KEY,
@@ -41,7 +88,6 @@ public class DatabaseUtil {
                 );
             """;
 
-            // ---- Programs table ----
             String createPrograms = """
                 CREATE TABLE IF NOT EXISTS programs (
                     program_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +96,6 @@ public class DatabaseUtil {
                 );
             """;
 
-            // ---- Program-Course linking table ----
             String createProgramCourses = """
                 CREATE TABLE IF NOT EXISTS program_courses (
                     program_id INTEGER,
@@ -60,7 +105,6 @@ public class DatabaseUtil {
                 );
             """;
 
-            // ---- NTC Requirements ----
             String createNTC = """
                 CREATE TABLE IF NOT EXISTS ntc_requirements (
                     ntc_requirement TEXT,
@@ -73,8 +117,72 @@ public class DatabaseUtil {
             stmt.execute(createProgramCourses);
             stmt.execute(createNTC);
 
-            System.out.println("Database initialized successfully.");
+            System.out.println("Production database initialized.");
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // =====================================================================
+    // TEST DATABASE INITIALIZER — YOU REQUESTED THIS STAY SEPARATE
+    // =====================================================================
+    public static void initializeDatabaseTests() {
+        // Use the shared test connection and do NOT close it here so the
+        // in-memory database remains available across the test lifecycle.
+        try {
+            Connection conn_t = connect();
+            try (Statement stmt = conn_t.createStatement()) {
+
+            String createCourses = """
+                CREATE TABLE IF NOT EXISTS courses (
+                    course_id TEXT PRIMARY KEY,
+                    course_name TEXT,
+                    course_code TEXT,
+                    credit_hours INTEGER,
+                    professor TEXT,
+                    days TEXT,
+                    time TEXT,
+                    building TEXT,
+                    room TEXT,
+                    attributes TEXT,
+                    prerequisites TEXT,
+                    corequisites TEXT,
+                    terms TEXT
+                );
+            """;
+
+            String createPrograms = """
+                CREATE TABLE IF NOT EXISTS programs (
+                    program_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    program_name TEXT,
+                    program_type TEXT
+                );
+            """;
+
+            String createProgramCourses = """
+                CREATE TABLE IF NOT EXISTS program_courses (
+                    program_id INTEGER,
+                    course_id TEXT,
+                    FOREIGN KEY(program_id) REFERENCES programs(program_id),
+                    FOREIGN KEY(course_id) REFERENCES courses(course_id)
+                );
+            """;
+
+            String createNTC = """
+                CREATE TABLE IF NOT EXISTS ntc_requirements (
+                    ntc_requirement TEXT,
+                    num_classes INTEGER
+                );
+            """;
+
+                stmt.execute(createCourses);
+                stmt.execute(createPrograms);
+                stmt.execute(createProgramCourses);
+                stmt.execute(createNTC);
+
+                System.out.println("In-memory TEST database initialized.");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

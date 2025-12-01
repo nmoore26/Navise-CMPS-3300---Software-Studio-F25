@@ -40,6 +40,8 @@ public class CourseRepository {
             pstmt.setString(13, String.join(",", course.get_term_offered()));
 
             pstmt.executeUpdate();
+            System.out.println("Inserting course: " + course.get_courseID());
+
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -59,7 +61,7 @@ public class CourseRepository {
 
 
     public Optional<Course> findById(String courseID) {
-        String sql = "SELECT * FROM courses WHERE \"CourseID\" = ?";
+        String sql = "SELECT * FROM courses WHERE course_id = ?";
         try (Connection conn = DatabaseUtil.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -68,6 +70,8 @@ public class CourseRepository {
             if (rs.next()) {
                 return Optional.of(mapResultSetToCourse(rs));
             }
+            System.out.println("Looking up course: " + courseID);
+
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -93,21 +97,34 @@ public class CourseRepository {
     }
 
     private Course mapResultSetToCourse(ResultSet rs) throws SQLException {
-        return new Course(
-                rs.getString("CourseID"),
-                rs.getString("CourseName"),
-                rs.getString("CRN: Course Code"),
-                rs.getInt("CreditHrs"),
-                rs.getString("Professor"),
-                rs.getString("DaysOffered"),
-                rs.getString("Time"),
-                rs.getString("Building"),
-                rs.getString("Room Number"),
-                Arrays.asList(rs.getString("Attribute/NTC Requirement").split(",")),
-                Arrays.asList(rs.getString("Prerequisite").split(",")),
-                Arrays.asList(rs.getString("Corequisite").split(",")),
-                Arrays.asList(rs.getString("Terms Offered").split(","))
-        );
+    // Helper to safely split nullable CSV columns into lists
+    String attrs = rs.getString("attributes");
+    List<String> attributeList = (attrs == null || attrs.isBlank()) ? new ArrayList<>() : Arrays.asList(attrs.split(","));
+
+    String prereq = rs.getString("prerequisites");
+    List<String> prereqList = (prereq == null || prereq.isBlank()) ? new ArrayList<>() : Arrays.asList(prereq.split(","));
+
+    String coreq = rs.getString("corequisites");
+    List<String> coreqList = (coreq == null || coreq.isBlank()) ? new ArrayList<>() : Arrays.asList(coreq.split(","));
+
+    String terms = rs.getString("terms");
+    List<String> termsList = (terms == null || terms.isBlank()) ? new ArrayList<>() : Arrays.asList(terms.split(","));
+
+    return new Course(
+        rs.getString("course_id"),
+        rs.getString("course_name"),
+        rs.getString("course_code"),
+        rs.getInt("credit_hours"),
+        rs.getString("professor"),
+        rs.getString("days"),
+        rs.getString("time"),
+        rs.getString("building"),
+        rs.getString("room"),
+        attributeList,
+        prereqList,
+        coreqList,
+        termsList
+    );
     }
     public void addNTCRequirement(String requirement, int num) {
         String sql = "INSERT INTO ntc_requirements (ntc_requirement, num_classes) VALUES (?, ?)";

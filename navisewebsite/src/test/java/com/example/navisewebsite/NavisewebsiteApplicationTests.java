@@ -11,20 +11,17 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AdminCourseServiceTests {
+public class NavisewebsiteApplicationTests {
 
     private AdminCourseService adminCourseService;
 
     @BeforeEach
     void setup() {
-        try {
-            // Initialize database (make sure it's safe to run in test mode)
-            DatabaseUtil.initializeDatabase();
-            adminCourseService = new AdminCourseService();
-        } catch (Exception e) {
-            fail("Failed to initialize AdminCourseService: " + e.getMessage());
-        }
+        DatabaseUtil.useTestDatabase();      // switch connection
+        DatabaseUtil.initializeDatabaseTests(); 
+        adminCourseService = new AdminCourseService();
     }
+
 
     // 1. Add a course to a Major program
     @Test
