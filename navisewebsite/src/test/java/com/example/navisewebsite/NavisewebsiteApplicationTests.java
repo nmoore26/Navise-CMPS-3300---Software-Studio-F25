@@ -19,7 +19,10 @@ public class NavisewebsiteApplicationTests {
     void setup() {
         DatabaseUtil.useTestDatabase();      // switch connection
         DatabaseUtil.initializeDatabaseTests(); 
-        adminCourseService = new AdminCourseService();
+        adminCourseService = new AdminCourseService(
+            new com.example.navisewebsite.repository.CourseRepository(),
+            new com.example.navisewebsite.repository.ProgramRepository()
+        );
     }
 
 

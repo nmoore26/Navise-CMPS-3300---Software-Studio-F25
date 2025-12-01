@@ -13,6 +13,7 @@ the production or test database and to create necessary tables if they do not ex
 public class DatabaseUtil {
 
     // --- Production DB ---
+    // Use absolute path to ensure the database file is created in the navisewebsite directory
     private static final String PROD_DB_URL = "jdbc:sqlite:courses.db";
 
     // --- Test DB (shared in-memory) ---
