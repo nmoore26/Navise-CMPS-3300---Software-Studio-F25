@@ -1,12 +1,14 @@
 package com.example.navisewebsite.service;
 
 import com.example.navisewebsite.domain.Course;
+import org.springframework.stereotype.Service;
 import com.example.navisewebsite.repository.CourseRepository;
 import com.example.navisewebsite.repository.ProgramRepository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class AdminCourseService {
 
     private final CourseRepository courseRepository;
