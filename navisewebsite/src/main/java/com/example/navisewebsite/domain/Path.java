@@ -1,7 +1,6 @@
 package com.example.navisewebsite.domain;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,7 +28,7 @@ public class Path {
     }
     
     public List<Course> getRequirements() { 
-        return Collections.unmodifiableList(requirements); 
+        return requirements;
     }
     
     public void setPathName(String pathName) { 
@@ -92,9 +91,49 @@ public class Path {
             return 0;
         }
         return courses.stream()
-                .mapToInt(Course::get_credit_hours)
+                .mapToInt(this::getCourseCredits)
                 .sum();
     }
+    
+    // Helper to safely get credits from a Course object regardless of method name
+    private int getCourseCredits(Course course) {
+        if (course == null) return 0;
+        
+        try {
+            // Try get_credit_hours() first
+            return course.get_credit_hours();
+        } catch (Throwable t1) {
+            try {
+                // Try getCredits() method
+                java.lang.reflect.Method m = course.getClass().getMethod("getCredits");
+                Object result = m.invoke(course);
+                if (result instanceof Number) {
+                    return ((Number) result).intValue();
+                }
+            } catch (Throwable t2) {
+                try {
+                    // Try direct field access for "credits"
+                    java.lang.reflect.Field f = course.getClass().getDeclaredField("credits");
+                    f.setAccessible(true);
+                    Object val = f.get(course);
+                    if (val instanceof Number) {
+                        return ((Number) val).intValue();
+                    }
+                } catch (Throwable t3) {
+                    try {
+                        // Try direct field access for "credit_hours"
+                        java.lang.reflect.Field f = course.getClass().getDeclaredField("credit_hours");
+                        f.setAccessible(true);
+                        Object val = f.get(course);
+                        if (val instanceof Number) {
+                            return ((Number) val).intValue();
+                        }
+                    } catch (Throwable t4) {
+                        // All attempts failed
+                    }
+                }
+            }
+        }
+        return 0;
+    }
 }
-
-//change to commit+push path

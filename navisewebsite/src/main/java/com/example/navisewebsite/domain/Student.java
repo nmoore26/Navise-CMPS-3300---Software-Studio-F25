@@ -72,10 +72,23 @@ public class Student extends Account {
         return pastCourses.remove(course);
     }
     
-    // Progress tracking methods - updated to use refactored Path methods
+
+// Progress tracking methods - updated to use refactored Path methods
     public boolean isOnTrack() {
-        return major != null && major.meetsRequirements(pastCourses);
+        // If a major is assigned, check major requirements.
+        if (major != null) {
+            return major.meetsRequirements(pastCourses);
+        }
+
+        if (minor != null) {
+            return getTotalCreditsCompleted() <= minor.getMaxHours();
+        }
+
+        return false;
     }
+
+
+
     
     public boolean isMinorWithinLimit() {
         return minor == null || minor.isWithinLimit(pastCourses);
@@ -121,13 +134,42 @@ public class Student extends Account {
     
     public int getTotalCreditsCompleted() {
         return pastCourses.stream()
-                .mapToInt(Course::get_credit_hours)
+                .mapToInt(this::getCourseCredits)
                 .sum();
     }
     
     public int getTotalCreditsInProgress() {
         return currentCourses.stream()
-                .mapToInt(Course::get_credit_hours)
+                .mapToInt(this::getCourseCredits)
                 .sum();
+    }
+    
+    // Helper to safely get credits from a Course object
+    private int getCourseCredits(Course course) {
+        if (course == null) return 0;
+        
+        try {
+            return course.get_credit_hours();
+        } catch (Throwable t1) {
+            try {
+                java.lang.reflect.Method m = course.getClass().getMethod("getCredits");
+                Object result = m.invoke(course);
+                if (result instanceof Number) {
+                    return ((Number) result).intValue();
+                }
+            } catch (Throwable t2) {
+                try {
+                    java.lang.reflect.Field f = course.getClass().getDeclaredField("credits");
+                    f.setAccessible(true);
+                    Object val = f.get(course);
+                    if (val instanceof Number) {
+                        return ((Number) val).intValue();
+                    }
+                } catch (Throwable t3) {
+                    // All attempts failed
+                }
+            }
+        }
+        return 0;
     }
 }
