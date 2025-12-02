@@ -1,9 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><title>Admin</title></head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+</head>
 <body>
 <h2>Welcome, Admin!</h2>
 <p>Logged in as: <span th:text="${email}">email</span></p>
-<p>This page rendered via the Template Method’s admin postLogin().</p>
+
+<!-- Display success/error messages -->
+<p th:text="${message}" style="color: green;"></p>
+<p th:text="${error}" style="color: red;"></p>
+
+<!-- ================= ADD COURSE FORM ================= -->
+<h3>Add a Course</h3>
+<form th:action="@{/admin/add-course}" method="post">
+    <label>Course ID: <input type="text" name="courseID" required></label><br>
+    <label>Course Name: <input type="text" name="courseName" required></label><br>
+    <label>Course Code: <input type="text" name="courseCode" required></label><br>
+    <label>Credit Hours: <input type="number" name="creditHours" required></label><br>
+    <label>Professor Name: <input type="text" name="professor" required></label><br>
+    <label>Days Offered: <input type="text" name="daysOffered"></label><br>
+    <label>Time: <input type="text" name="time"></label><br>
+    <label>Building: <input type="text" name="building"></label><br>
+    <label>Room Number: <input type="text" name="roomNumber"></label><br>
+
+    <!-- Comma-separated fields -->
+    <label>Attributes (comma-separated): <input type="text" name="attributesCSV"></label><br>
+    <label>Prerequisites (comma-separated): <input type="text" name="prerequisitesCSV"></label><br>
+    <label>Corequisites (comma-separated): <input type="text" name="corequisitesCSV"></label><br>
+    <label>Terms Offered (comma-separated): <input type="text" name="termsCSV"></label><br>
+
+    <!-- Program info -->
+    <label>Program Name: <input type="text" name="programName" required></label><br>
+    <label>Program Type:
+        <select name="programType" required>
+            <option value="Major">Major</option>
+            <option value="Minor">Minor</option>
+        </select>
+    </label><br>
+
+    <button type="submit">Add Course</button>
+</form>
+
+<!-- ================= REMOVE COURSE FORM ================= -->
+<h3>Remove a Course</h3>
+<form th:action="@{/admin/remove-course}" th:object="${course}" method="post">
+    <label>Course ID to Remove: <input type="text" th:field="*{courseID}" required></label><br>
+    <button type="submit">Remove Course</button>
+</form>
+
+<!-- ================= ADD PROGRAM FORM ================= -->
+<h3>Add a Program (Major/Minor)</h3>
+<form th:action="@{/admin/add-program}" method="post">
+    <label>Program Name:</label>
+    <input type="text" name="programName" required><br>
+
+    <label>Program Type:</label>
+    <select name="programType" required>
+        <option value="Major">Major</option>
+        <option value="Minor">Minor</option>
+    </select><br>
+
+    <button type="submit">Add Program</button>
+</form>
+
+<!-- ================= REMOVE PROGRAM FORM ================= -->
+<h3>Remove a Program</h3>
+<form th:action="@{/admin/remove-program}" method="post">
+    <label>Program Name to Remove: <input type="text" name="programName" required></label><br>
+    <button type="submit">Remove Program</button>
+</form>
+
 </body>
 </html>
+

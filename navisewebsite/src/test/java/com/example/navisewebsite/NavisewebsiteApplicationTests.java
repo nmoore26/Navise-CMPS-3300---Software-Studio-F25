@@ -17,9 +17,22 @@ public class NavisewebsiteApplicationTests {
 
     @BeforeEach
     void setup() {
-        DatabaseUtil.useTestDatabase();      // switch connection
-        DatabaseUtil.initializeDatabaseTests(); 
-        adminCourseService = new AdminCourseService();
+        DatabaseUtil.useTestDatabase();      // switch connection and initialize once
+        // Clear tables for each test to ensure clean state
+        DatabaseUtil.clearUsersTable();
+        try (java.sql.Connection conn = DatabaseUtil.connect();
+             java.sql.Statement stmt = conn.createStatement()) {
+            stmt.execute("DELETE FROM courses");
+            stmt.execute("DELETE FROM programs");
+            stmt.execute("DELETE FROM program_courses");
+            stmt.execute("DELETE FROM ntc_requirements");
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+        }
+        adminCourseService = new AdminCourseService(
+            new com.example.navisewebsite.repository.CourseRepository(),
+            new com.example.navisewebsite.repository.ProgramRepository()
+        );
     }
 
 
