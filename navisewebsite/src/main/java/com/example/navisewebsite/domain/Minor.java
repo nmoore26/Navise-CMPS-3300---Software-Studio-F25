@@ -112,68 +112,69 @@ public class Minor extends Path {
         List<Course> uncompleted = getUncompletedRequirements(completed);
         return uncompleted.isEmpty();
     }
-
+/*
     // Try multiple method and field names to extract an int credit value
-private int extractCredits(Course c) {
-    if (c == null) return 0;
-    Class<?> cls = c.getClass();
+    private int extractCredits(Course c) {
+        if (c == null) return 0;
+        Class<?> cls = c.getClass();
 
-    // Try common getter methods
-    String[] methodNames = new String[] {
-        "get_credit_hours", "getCreditHours", "getCredits", "get_creditHours", "get_credit_hours", "get_credit"
-    };
-    for (String mname : methodNames) {
-        try {
-            java.lang.reflect.Method m = cls.getMethod(mname);
+        // Try common getter methods
+        String[] methodNames = new String[] {
+            "get_credit_hours", "getCreditHours", "getCredits", "get_creditHours", "get_credit_hours", "get_credit"
+        };
+        for (String mname : methodNames) {
             try {
-                Object val = m.invoke(c);
-                if (val instanceof Number) return ((Number) val).intValue();
-                if (val != null) {
-                    try { return Integer.parseInt(String.valueOf(val)); } catch (NumberFormatException ignore) {}
-                }
-            } catch (IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
-                // invocation failed; try next
-            }
-        } catch (NoSuchMethodException ignore) {}
-
-        // try "getX" variant if not already a getter
-        if (!mname.startsWith("get")) {
-            try {
-                String getter = "get" + Character.toUpperCase(mname.charAt(0)) + mname.substring(1);
-                java.lang.reflect.Method m2 = cls.getMethod(getter);
+                java.lang.reflect.Method m = cls.getMethod(mname);
                 try {
-                    Object val = m2.invoke(c);
+                    Object val = m.invoke(c);
                     if (val instanceof Number) return ((Number) val).intValue();
                     if (val != null) {
                         try { return Integer.parseInt(String.valueOf(val)); } catch (NumberFormatException ignore) {}
                     }
                 } catch (IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
-                    // ignore and continue
+                    // invocation failed; try next
                 }
             } catch (NoSuchMethodException ignore) {}
-        }
-    }
 
-    // Try common field names
-    String[] fieldNames = new String[] { "credit_hours", "credits", "creditHours", "credit" };
-    for (String fname : fieldNames) {
-        try {
-            java.lang.reflect.Field f = cls.getDeclaredField(fname);
-            f.setAccessible(true);
-            try {
-                Object val = f.get(c);
-                if (val instanceof Number) return ((Number) val).intValue();
-                if (val != null) {
-                    try { return Integer.parseInt(String.valueOf(val)); } catch (NumberFormatException ignore) {}
-                }
-            } catch (IllegalAccessException e) {
-                // cannot access field; continue
+            // try "getX" variant if not already a getter
+            if (!mname.startsWith("get")) {
+                try {
+                    String getter = "get" + Character.toUpperCase(mname.charAt(0)) + mname.substring(1);
+                    java.lang.reflect.Method m2 = cls.getMethod(getter);
+                    try {
+                        Object val = m2.invoke(c);
+                        if (val instanceof Number) return ((Number) val).intValue();
+                        if (val != null) {
+                            try { return Integer.parseInt(String.valueOf(val)); } catch (NumberFormatException ignore) {}
+                        }
+                    } catch (IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
+                        // ignore and continue
+                    }
+                } catch (NoSuchMethodException ignore) {}
             }
-        } catch (NoSuchFieldException ignore) {}
-    }
+        }
 
-    // Fallback: 0 credits if nothing found
-    return 0;
-}
+        // Try common field names
+        String[] fieldNames = new String[] { "credit_hours", "credits", "creditHours", "credit" };
+        for (String fname : fieldNames) {
+            try {
+                java.lang.reflect.Field f = cls.getDeclaredField(fname);
+                f.setAccessible(true);
+                try {
+                    Object val = f.get(c);
+                    if (val instanceof Number) return ((Number) val).intValue();
+                    if (val != null) {
+                        try { return Integer.parseInt(String.valueOf(val)); } catch (NumberFormatException ignore) {}
+                    }
+                } catch (IllegalAccessException e) {
+                    // cannot access field; continue
+                }
+            } catch (NoSuchFieldException ignore) {}
+        }
+
+        // Fallback: 0 credits if nothing found
+        return 0;
+    }
+*/
 
 }
