@@ -1,17 +1,10 @@
-package com.example.navisewebsite.domain;    
+package com.example.navisewebsite;    
 
 import org.junit.jupiter.api.Test;
-
 import java.util.*;
-
 import static org.junit.jupiter.api.Assertions.*;
+import com.example.navisewebsite.domain.ProjectedSchedule;
 
-/**
- * ProjectedScheduleTests
- * 
- * Unit tests for ProjectedSchedule methods (constructors not tested).
- * Uses in-memory repositories for DB-independent testing.
- */
 public class ProjectedScheduleTests {
 
     // In-memory CourseRepository
@@ -21,7 +14,8 @@ public class ProjectedScheduleTests {
         private final Map<String, ProjectedSchedule.Course> byCode = new HashMap<>();
 
         void addPathway(String id, ProjectedSchedule.Course... courses) {
-            pathways.put(id, Arrays.asList(courses));
+            // store a mutable copy so tests (or code) can add/remove later
+            pathways.put(id, new ArrayList<>(Arrays.asList(courses)));
             for (ProjectedSchedule.Course c : courses) {
                 byId.put(c.id, c);
                 byCode.put(c.code, c);
@@ -30,7 +24,8 @@ public class ProjectedScheduleTests {
 
         @Override
         public List<ProjectedSchedule.Course> coursesForPathway(String pathwayId) {
-            return pathways.getOrDefault(pathwayId, Collections.emptyList());
+            // return a mutable list copy to avoid exposing internal map directly
+            return new ArrayList<>(pathways.getOrDefault(pathwayId, Collections.emptyList()));
         }
 
         @Override
@@ -49,12 +44,12 @@ public class ProjectedScheduleTests {
         private final Map<String, List<Integer>> userCourses = new HashMap<>();
 
         void setCompleted(String userId, Integer... ids) {
-            userCourses.put(userId, Arrays.asList(ids));
+            userCourses.put(userId, new ArrayList<>(Arrays.asList(ids)));
         }
 
         @Override
         public List<Integer> completedCourseIdsForUser(String userId) {
-            return userCourses.getOrDefault(userId, Collections.emptyList());
+            return new ArrayList<>(userCourses.getOrDefault(userId, Collections.emptyList()));
         }
     }
 
@@ -209,9 +204,12 @@ public class ProjectedScheduleTests {
     @Test
     public void testMergeWithExistingSchedule_respectsEightSemesterCap() {
         InMemoryCourseRepo cr = new InMemoryCourseRepo();
-        // Create many courses to exceed 8 semesters
+        // Create many courses that will force UNSCHEDULED scenario
+        // With 2 existing semesters already at 12 credits, we can add max 6 more semesters
+        // Each new semester can hold max 21 credits = 126 credits in 6 new semesters
+        // 50 courses * 3 credits = 150 credits total, so 24+ credits cannot be scheduled
         List<ProjectedSchedule.Course> many = new ArrayList<>();
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 50; i++) {
             many.add(new ProjectedSchedule.Course(500 + i, "C" + (500 + i), 3, "Course " + i, ""));
         }
         cr.addPathway("MANY", many.toArray(new ProjectedSchedule.Course[0]));
@@ -232,10 +230,10 @@ public class ProjectedScheduleTests {
         // Schedule should not exceed 8 semesters
         assertTrue(result.mergedSchedule.semesters.size() <= 8);
 
-        // Check for UNSCHEDULED courses
+        // With 50 courses needing 150 credits and limited space, there must be UNSCHEDULED courses
         boolean hasUnscheduled = result.addedCourses.stream()
                 .anyMatch(a -> "UNSCHEDULED".equals(a.semesterLabel));
-        assertTrue(hasUnscheduled);
+        assertTrue(hasUnscheduled, "Expected some courses to be UNSCHEDULED due to 8 semester cap");
 
         // No semester should exceed 21 credits
         for (ProjectedSchedule.SemesterPlan sem : result.mergedSchedule.semesters) {
@@ -305,4 +303,43 @@ public class ProjectedScheduleTests {
         assertTrue(out.contains("MW 10:00-11:15"));
         assertTrue(out.contains("Test Course"));
     }
+
+    @Test
+    public void testProjectForPrograms_combinesMajorAndMinorAndDeduplicates() {
+        InMemoryCourseRepo cr = new InMemoryCourseRepo();
+        // Course 100 satisfies both major and minor; should appear once
+        ProjectedSchedule.Course shared = new ProjectedSchedule.Course(100, "SHARED101", 3, "Shared", "");
+        ProjectedSchedule.Course majorOnly = new ProjectedSchedule.Course(101, "MAJ101", 4, "Major Only", "");
+        ProjectedSchedule.Course minorOnly = new ProjectedSchedule.Course(102, "MIN101", 3, "Minor Only", "");
+        cr.addPathway("MAJOR", shared, majorOnly);
+        cr.addPathway("MINOR", shared, minorOnly);
+
+        InMemoryUserRepo ur = new InMemoryUserRepo();
+        ur.setCompleted("uProg"); // none completed
+
+        ProjectedSchedule ps = new ProjectedSchedule(cr, ur);
+        ProjectedSchedule.SchedulePlan plan = ps.projectForPrograms("MAJOR", "MINOR", "uProg", 7);
+
+        // Expect combined 3 courses scheduled across semesters
+        assertEquals(3, plan.totalCourses());
+        // Ensure shared course appears only once
+        long sharedCount = plan.semesters.stream()
+                .flatMap(s -> s.courses.stream())
+                .filter(c -> "SHARED101".equals(c.code))
+                .count();
+        assertEquals(1, sharedCount);
+}
+
+    @Test
+    public void testMissingCoursesForProgram_respectsCompletedCourses() {
+        InMemoryCourseRepo cr = new InMemoryCourseRepo();
+        cr.addPathway("MAJOR", new ProjectedSchedule.Course(200, "M200", 3, "M200", ""));
+        InMemoryUserRepo ur = new InMemoryUserRepo();
+        ur.setCompleted("uX", 200);
+
+        ProjectedSchedule ps = new ProjectedSchedule(cr, ur);
+        List<ProjectedSchedule.Course> missing = ps.missingCoursesForProgram("MAJOR", "uX");
+        assertTrue(missing.isEmpty());
+    }
+
 }

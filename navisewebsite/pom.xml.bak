@@ -75,36 +75,33 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
 
-			<!-- Fail build only if skipTests or maven.test.skip is explicitly set to true -->
-			<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-antrun-plugin</artifactId>
-			<version>3.1.0</version>
-			<executions>
-				<execution>
-				<id>fail-if-skip-tests</id>
-				<phase>validate</phase>
-				<goals>
-					<goal>run</goal>
-				</goals>
-				<configuration>
-					<target>
-					<!-- set skip.tests.set if either property equals "true" -->
-					<condition property="skip.tests.set">
-						<or>
-						<equals arg1="${skipTests}" arg2="true"/>
-						<equals arg1="${maven.test.skip}" arg2="true"/>
-						</or>
-					</condition>
-
-					<!-- fail only when skip.tests.set is true -->
-					<fail message="Build refused: tests are being skipped (skipTests or maven.test.skip = true). Do not skip tests." if="skip.tests.set"/>
-					</target>
-				</configuration>
-				</execution>
-			</executions>
-			</plugin>
-
+      <!-- Fail build if skipTests or maven.test.skip is set -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.2.1</version>
+        <executions>
+          <execution>
+            <id>enforce-no-skip-tests</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireProperty>
+                  <property>!skipTests</property>
+                  <message>Build refused: skipTests property is set. Do not skip tests.</message>
+                </requireProperty>
+                <requireProperty>
+                  <property>!maven.test.skip</property>
+                  <message>Build refused: maven.test.skip property is set. Do not skip tests.</message>
+                </requireProperty>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
     </plugins>
   </build>

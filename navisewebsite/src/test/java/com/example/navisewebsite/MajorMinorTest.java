@@ -179,6 +179,11 @@ class MajorMinorTest {
         student.setMinor(artMinor);
         
         student.addPastCourse(math); // 3 hours
+       System.out.println("DEBUG: pastCourses.size() = " + student.getPastCourses().size());
+System.out.println("DEBUG: student.getTotalCreditsCompleted() = " + student.getTotalCreditsCompleted());
+System.out.println("DEBUG: minor = " + (student.getMinor() == null ? "null" : student.getMinor().getPathName()));
+System.out.println("DEBUG: minor.getMaxHours() = " + (student.getMinor() == null ? "null" : student.getMinor().getMaxHours()));
+System.out.println("DEBUG: minor.getCompletedHours(past) = " + (student.getMinor() == null ? "null" : student.getMinor().getCompletedHours(student.getPastCourses()))); assertTrue(student.isOnTrack());
         assertTrue(student.isMinorWithinLimit());
         
         student.addPastCourse(cs); // 6 hours total - at limit

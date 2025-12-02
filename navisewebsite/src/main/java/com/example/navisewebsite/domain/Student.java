@@ -1,8 +1,12 @@
 package com.example.navisewebsite.domain;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+// Student account with current/past courses and optional major/minor paths.
 public class Student extends Account {
     private int userId; // Database user ID
     private String firstName; // Student's first name
@@ -11,19 +15,19 @@ public class Student extends Account {
     private List<Course> pastCourses;
     private Major major;
     private Minor minor;
-    
+
     // Constructor with database user ID and name (preferred for DB-backed students)
-    public Student(int userId, String firstName, String lastName, String email, String storedPassword) { 
+    public Student(int userId, String firstName, String lastName, String email, String storedPassword) {
         super(email, storedPassword);
         this.userId = userId;
-        this.firstName = firstName;
-        this.lastName = lastName;
+        this.firstName = firstName != null ? firstName : "";
+        this.lastName = lastName != null ? lastName : "";
         this.currentCourses = new ArrayList<>();
         this.pastCourses = new ArrayList<>();
     }
-    
+
     // Constructor with database user ID (backward compatibility)
-    public Student(int userId, String email, String storedPassword) { 
+    public Student(int userId, String email, String storedPassword) {
         super(email, storedPassword);
         this.userId = userId;
         this.firstName = "";
@@ -31,9 +35,9 @@ public class Student extends Account {
         this.currentCourses = new ArrayList<>();
         this.pastCourses = new ArrayList<>();
     }
-    
+
     // Legacy constructor for backward compatibility
-    public Student(String email, String storedPassword) { 
+    public Student(String email, String storedPassword) {
         super(email, storedPassword);
         this.userId = -1; // No database ID
         this.firstName = "";
@@ -41,113 +45,121 @@ public class Student extends Account {
         this.currentCourses = new ArrayList<>();
         this.pastCourses = new ArrayList<>();
     }
-    
-    @Override 
-    protected void authorize() { 
-        /* students: no special gate here */ 
+
+    @Override
+    protected void authorize() {
+        /* students: no special gate here */
     }
-    
-    @Override 
-    protected String postLogin() { 
-        return "student"; 
+
+    @Override
+    protected String postLogin() {
+        return "student";
     }
-    
-    // Getters - following Java conventions
+
+    // Getters - following Java conventions, defensive copies where appropriate
     public int getUserId() {
         return userId;
     }
-    
+
     public String getFirstName() {
         return firstName;
     }
-    
+
     public String getLastName() {
         return lastName;
     }
-    
+
     public String getFullName() {
         return (firstName + " " + lastName).trim();
     }
-    
-    public List<Course> getCurrentCourses() { 
-        return new ArrayList<>(currentCourses); 
+
+    public List<Course> getCurrentCourses() {
+        return new ArrayList<>(currentCourses);
     }
-    
-    public List<Course> getPastCourses() { 
-        return new ArrayList<>(pastCourses); 
+
+    public List<Course> getPastCourses() {
+        return new ArrayList<>(pastCourses);
     }
-    
-    public Major getMajor() { 
-        return major; 
+
+    public Major getMajor() {
+        return major;
     }
-    
-    public Minor getMinor() { 
-        return minor; 
+
+    public Minor getMinor() {
+        return minor;
     }
-    
-    // Setters - following Java conventions
+
+    // Setters
     public void setFirstName(String firstName) {
         this.firstName = firstName != null ? firstName : "";
     }
-    
+
     public void setLastName(String lastName) {
         this.lastName = lastName != null ? lastName : "";
     }
-    
-    public void setMajor(Major major) { 
-        this.major = major; 
+
+    public void setMajor(Major major) {
+        this.major = major;
     }
-    
-    public void setMinor(Minor minor) { 
-        this.minor = minor; 
+
+    public void setMinor(Minor minor) {
+        this.minor = minor;
     }
-    
+
     // Course management methods
     public void addCurrentCourse(Course course) {
         if (course != null) {
             currentCourses.add(course);
         }
     }
-    
+
     public void addPastCourse(Course course) {
         if (course != null) {
             pastCourses.add(course);
         }
     }
-    
+
     public boolean removeCurrentCourse(Course course) {
         return currentCourses.remove(course);
     }
-    
+
     public boolean removePastCourse(Course course) {
         return pastCourses.remove(course);
     }
-    
-    // Progress tracking methods - updated to use refactored Path methods
+
+    // Progress tracking methods - use Path/major/minor helpers where possible
     public boolean isOnTrack() {
-        return major != null && major.meetsRequirements(pastCourses);
+        if (major != null) {
+            return major.meetsRequirements(pastCourses);
+        }
+
+        if (minor != null) {
+            return getTotalCreditsCompleted() <= minor.getMaxHours();
+        }
+
+        return false;
     }
-    
+
     public boolean isMinorWithinLimit() {
         return minor == null || minor.isWithinLimit(pastCourses);
     }
-    
+
     public boolean canGraduate() {
         if (major == null) {
             return false;
         }
-        
+
         boolean majorComplete = major.canGraduate(pastCourses);
         boolean minorComplete = (minor == null) || minor.isComplete(pastCourses);
-        
+
         return majorComplete && minorComplete;
     }
-    
+
     // Status reporting
     public String getStatus() {
         StringBuilder sb = new StringBuilder();
         sb.append("Student: ").append(getEmail()).append("\n");
-        
+
         if (major != null) {
             sb.append("Major: ").append(major.getPathName()).append("\n");
             sb.append("On Track: ").append(isOnTrack() ? "Yes" : "No").append("\n");
@@ -157,7 +169,7 @@ public class Student extends Account {
         } else {
             sb.append("Major: Not assigned\n");
         }
-        
+
         if (minor != null) {
             sb.append("Minor: ").append(minor.getPathName()).append("\n");
             sb.append("Within Limit: ").append(isMinorWithinLimit() ? "Yes" : "No").append("\n");
@@ -166,19 +178,88 @@ public class Student extends Account {
         } else {
             sb.append("Minor: Not assigned\n");
         }
-        
+
         return sb.toString();
     }
-    
+
     public int getTotalCreditsCompleted() {
         return pastCourses.stream()
-                .mapToInt(Course::get_credit_hours)
+                .mapToInt(this::getCourseCredits)
                 .sum();
     }
-    
+
     public int getTotalCreditsInProgress() {
         return currentCourses.stream()
-                .mapToInt(Course::get_credit_hours)
+                .mapToInt(this::getCourseCredits)
                 .sum();
+    }
+
+    // Helper to safely get credits from a Course object using a sequence of attempts.
+    private int getCourseCredits(Course course) {
+        if (course == null) return 0;
+
+        // 1) Try direct call if available on compile-time type
+        try {
+            return course.get_credit_hours();
+        } catch (Throwable ignored) {
+            // fall through to reflective attempts
+        }
+
+        // 2) Try common getter names via reflection
+        String[] getterNames = new String[] { "getCredits", "getCreditHours", "get_credit_hours" };
+        for (String name : getterNames) {
+            Integer val = tryInvokeIntMethod(course, name);
+            if (val != null) return val;
+        }
+
+        // 3) Try common field names via reflection
+        String[] fieldNames = new String[] { "credits", "credit_hours", "creditHours" };
+        for (String fname : fieldNames) {
+            Integer val = tryReadIntField(course, fname);
+            if (val != null) return val;
+        }
+
+        return 0;
+    }
+
+    private Integer tryInvokeIntMethod(Course course, String methodName) {
+        try {
+            Method m = course.getClass().getMethod(methodName);
+            Object result = m.invoke(course);
+            if (result instanceof Number) {
+                return ((Number) result).intValue();
+            }
+            if (result != null) {
+                try {
+                    return Integer.parseInt(String.valueOf(result));
+                } catch (NumberFormatException ignored) {
+                    // not parseable; continue
+                }
+            }
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
+            // method not present or not accessible; continue
+        }
+        return null;
+    }
+
+    private Integer tryReadIntField(Course course, String fieldName) {
+        try {
+            Field f = course.getClass().getDeclaredField(fieldName);
+            f.setAccessible(true);
+            Object val = f.get(course);
+            if (val instanceof Number) {
+                return ((Number) val).intValue();
+            }
+            if (val != null) {
+                try {
+                    return Integer.parseInt(String.valueOf(val));
+                } catch (NumberFormatException ignored) {
+                    // not parseable; continue
+                }
+            }
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+            // field not present or not accessible; continue
+        }
+        return null;
     }
 }
