@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * Controller for handling admin actions like adding courses
@@ -28,6 +29,31 @@ public class AdminController {
     public String adminPage(Model model) {
         model.addAttribute("course", new Course());
         return "admin";
+    }
+
+    /**
+     * Serve the admin home/dashboard page.
+     * Requires active session (admin must be logged in).
+     * 
+     * @param session the HttpSession containing admin data
+     * @param model the Model to pass data to the template
+     * @return the admin-home template or redirect to login if not authenticated
+     */
+    @GetMapping("/admin-home")
+    public String adminHome(HttpSession session, Model model) {
+        // Check if user is logged in and is an admin
+        Object userType = session.getAttribute("userType");
+        Object email = session.getAttribute("email");
+        
+        if (userType == null || !"admin".equals(userType)) {
+            // Redirect to login if not authenticated as an admin
+            return "redirect:/";
+        }
+        
+        // Pass admin email to the template
+        model.addAttribute("email", email);
+        
+        return "admin-home";
     }
 
     /**

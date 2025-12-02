@@ -56,6 +56,20 @@ public class DatabaseUtil {
         }
     }
 
+    /**
+     * Clear the users table for test isolation between test methods.
+     */
+    public static void clearUsersTable() {
+        if (useTestDB) {
+            try (Connection conn = connect();
+                 Statement stmt = conn.createStatement()) {
+                stmt.execute("DELETE FROM users");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     // --- Universal connect method ---
     public static Connection connect() throws SQLException {
         if (useTestDB) {
@@ -70,6 +84,16 @@ public class DatabaseUtil {
     // =====================================================================
     public static void initializeDatabase() {
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
+
+            String createUsers = """
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL,
+                    user_type TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """;
 
             String createCourses = """
                 CREATE TABLE IF NOT EXISTS courses (
@@ -113,6 +137,7 @@ public class DatabaseUtil {
                 );
             """;
 
+            stmt.execute(createUsers);
             stmt.execute(createCourses);
             stmt.execute(createPrograms);
             stmt.execute(createProgramCourses);
@@ -135,6 +160,16 @@ public class DatabaseUtil {
             Connection conn_t = connect();
             try (Statement stmt = conn_t.createStatement()) {
 
+            String createUsers = """
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL,
+                    user_type TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """;
+
             String createCourses = """
                 CREATE TABLE IF NOT EXISTS courses (
                     course_id TEXT PRIMARY KEY,
@@ -177,6 +212,7 @@ public class DatabaseUtil {
                 );
             """;
 
+                stmt.execute(createUsers);
                 stmt.execute(createCourses);
                 stmt.execute(createPrograms);
                 stmt.execute(createProgramCourses);
