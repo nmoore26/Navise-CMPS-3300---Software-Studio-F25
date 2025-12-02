@@ -6,8 +6,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-//Student account with current/past courses and optional major/minor paths.
-
+// Student account with current/past courses and optional major/minor paths.
 public class Student extends Account {
     private int userId; // Database user ID
     private String firstName; // Student's first name
@@ -17,20 +16,18 @@ public class Student extends Account {
     private Major major;
     private Minor minor;
 
-    public Student(String email, String storedPassword) {
-    
     // Constructor with database user ID and name (preferred for DB-backed students)
-    public Student(int userId, String firstName, String lastName, String email, String storedPassword) { 
+    public Student(int userId, String firstName, String lastName, String email, String storedPassword) {
         super(email, storedPassword);
         this.userId = userId;
-        this.firstName = firstName;
-        this.lastName = lastName;
+        this.firstName = firstName != null ? firstName : "";
+        this.lastName = lastName != null ? lastName : "";
         this.currentCourses = new ArrayList<>();
         this.pastCourses = new ArrayList<>();
     }
-    
+
     // Constructor with database user ID (backward compatibility)
-    public Student(int userId, String email, String storedPassword) { 
+    public Student(int userId, String email, String storedPassword) {
         super(email, storedPassword);
         this.userId = userId;
         this.firstName = "";
@@ -38,9 +35,9 @@ public class Student extends Account {
         this.currentCourses = new ArrayList<>();
         this.pastCourses = new ArrayList<>();
     }
-    
+
     // Legacy constructor for backward compatibility
-    public Student(String email, String storedPassword) { 
+    public Student(String email, String storedPassword) {
         super(email, storedPassword);
         this.userId = -1; // No database ID
         this.firstName = "";
@@ -59,29 +56,25 @@ public class Student extends Account {
         return "student";
     }
 
-    // Getters - defensive copies to preserve encapsulation
-    public List<Course> getCurrentCourses() {
-        return new ArrayList<>(currentCourses);
-    
-    // Getters - following Java conventions
+    // Getters - following Java conventions, defensive copies where appropriate
     public int getUserId() {
         return userId;
     }
-    
+
     public String getFirstName() {
         return firstName;
     }
-    
+
     public String getLastName() {
         return lastName;
     }
-    
+
     public String getFullName() {
         return (firstName + " " + lastName).trim();
     }
-    
-    public List<Course> getCurrentCourses() { 
-        return new ArrayList<>(currentCourses); 
+
+    public List<Course> getCurrentCourses() {
+        return new ArrayList<>(currentCourses);
     }
 
     public List<Course> getPastCourses() {
@@ -97,20 +90,16 @@ public class Student extends Account {
     }
 
     // Setters
-    public void setMajor(Major major) {
-        this.major = major;
-    
-    // Setters - following Java conventions
     public void setFirstName(String firstName) {
         this.firstName = firstName != null ? firstName : "";
     }
-    
+
     public void setLastName(String lastName) {
         this.lastName = lastName != null ? lastName : "";
     }
-    
-    public void setMajor(Major major) { 
-        this.major = major; 
+
+    public void setMajor(Major major) {
+        this.major = major;
     }
 
     public void setMinor(Minor minor) {
