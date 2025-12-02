@@ -21,6 +21,7 @@ public class DatabaseUtil {
     // within the same process see the same in-memory database.
     private static final String TEST_DB_URL = "jdbc:sqlite:file:memdb?mode=memory&cache=shared";
     private static boolean useTestDB = false;
+    private static boolean testDatabaseInitialized = false;
     // Keep a single persistent "keeper" connection open for the in-memory
     // test DB so it persists for the duration of the test run.
     private static Connection testKeeper = null;
@@ -32,6 +33,11 @@ public class DatabaseUtil {
         try {
             if (testKeeper == null || testKeeper.isClosed()) {
                 testKeeper = DriverManager.getConnection(TEST_DB_URL);
+                // Initialize the test database only once per JVM
+                if (!testDatabaseInitialized) {
+                    initializeDatabaseTests();
+                    testDatabaseInitialized = true;
+                }
                 // Register shutdown hook to close the keeper when JVM exits
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     closeTestDatabase();
@@ -219,6 +225,10 @@ public class DatabaseUtil {
                 stmt.execute(createNTC);
 
                 System.out.println("In-memory TEST database initialized.");
+            } catch (SQLException e) {
+                if (!e.getMessage().contains("already exists")) {
+                    e.printStackTrace();
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();

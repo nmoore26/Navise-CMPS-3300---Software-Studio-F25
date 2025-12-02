@@ -20,7 +20,7 @@ public class UserRepositoryTest {
     public void setUp() {
         // Initialize test database with fresh users table for each test
         DatabaseUtil.useTestDatabase();
-        DatabaseUtil.initializeDatabaseTests();
+        // Only clear the users table (tables are initialized once by useTestDatabase())
         DatabaseUtil.clearUsersTable();
         userRepository = new UserRepository();
     }
