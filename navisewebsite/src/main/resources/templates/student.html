@@ -1,9 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><title>Student</title></head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard</title>
+</head>
 <body>
+
 <h2>Welcome, Student!</h2>
+
 <p>Logged in as: <span th:text="${email}">email</span></p>
-<p>This page rendered via the Template Method’s student postLogin().</p>
+<p>This page was rendered via postLogin().</p>
+
+<hr>
+
+<h3>Schedule Tools</h3>
+
+<form th:action="@{/student/schedules}" method="get">
+    <button type="submit">View My Schedules</button>
+</form>
+
+<br>
+
+<form th:action="@{/student/schedules/generate}" method="post">
+    <button type="submit">Generate New Schedule</button>
+</form>
+
 </body>
 </html>
