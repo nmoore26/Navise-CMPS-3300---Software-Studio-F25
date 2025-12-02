@@ -14,7 +14,8 @@ public class ProjectedScheduleTests {
         private final Map<String, ProjectedSchedule.Course> byCode = new HashMap<>();
 
         void addPathway(String id, ProjectedSchedule.Course... courses) {
-            pathways.put(id, Arrays.asList(courses));
+            // store a mutable copy so tests (or code) can add/remove later
+            pathways.put(id, new ArrayList<>(Arrays.asList(courses)));
             for (ProjectedSchedule.Course c : courses) {
                 byId.put(c.id, c);
                 byCode.put(c.code, c);
@@ -23,7 +24,8 @@ public class ProjectedScheduleTests {
 
         @Override
         public List<ProjectedSchedule.Course> coursesForPathway(String pathwayId) {
-            return pathways.getOrDefault(pathwayId, Collections.emptyList());
+            // return a mutable list copy to avoid exposing internal map directly
+            return new ArrayList<>(pathways.getOrDefault(pathwayId, Collections.emptyList()));
         }
 
         @Override
@@ -42,12 +44,12 @@ public class ProjectedScheduleTests {
         private final Map<String, List<Integer>> userCourses = new HashMap<>();
 
         void setCompleted(String userId, Integer... ids) {
-            userCourses.put(userId, Arrays.asList(ids));
+            userCourses.put(userId, new ArrayList<>(Arrays.asList(ids)));
         }
 
         @Override
         public List<Integer> completedCourseIdsForUser(String userId) {
-            return userCourses.getOrDefault(userId, Collections.emptyList());
+            return new ArrayList<>(userCourses.getOrDefault(userId, Collections.emptyList()));
         }
     }
 
