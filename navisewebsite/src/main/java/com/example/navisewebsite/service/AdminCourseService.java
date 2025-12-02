@@ -1,22 +1,20 @@
 package com.example.navisewebsite.service;
 
 import com.example.navisewebsite.domain.Course;
-import org.springframework.stereotype.Service;
 import com.example.navisewebsite.repository.CourseRepository;
 import com.example.navisewebsite.repository.ProgramRepository;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.stereotype.Service;
 @Service
 public class AdminCourseService {
-
     private final CourseRepository courseRepository;
     private final ProgramRepository programRepository;
-
-    public AdminCourseService() {
-        this.courseRepository = new CourseRepository();
-        this.programRepository = new ProgramRepository();
+    public AdminCourseService(CourseRepository courseRepository, ProgramRepository programRepository) {
+        this.courseRepository = courseRepository;
+        this.programRepository = programRepository;
     }
 
     /**
@@ -26,6 +24,9 @@ public class AdminCourseService {
      * @param programName  Name of the program
      * @param programType  Either "Major" or "Minor"
      */
+    // 1. Add the course to the courses table
+    // 2. Add the program (major/minor) if it doesn't exist
+    // 3. Link the course to the program in program_courses table
     public void add_course(Course course, String programName, String programType) {
         // 1. Add the course to the courses table
         courseRepository.addCourse(course);
@@ -35,6 +36,7 @@ public class AdminCourseService {
 
         // 3. Link the course to the program in program_courses table
         programRepository.addCourseToProgram(programId, course.get_courseID());
+        
     }
 
     /**
