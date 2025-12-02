@@ -1,7 +1,19 @@
 package com.example.navisewebsite.domain;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 //Utilities for projecting and merging course schedules for a pathway and user.
@@ -517,4 +529,43 @@ public class ProjectedSchedule {
         }
         return sb.toString();
     }
+
+    // Return courses needed to complete a program (major or minor).
+    public List<Course> missingCoursesForProgram(String programId, String userId) {
+        return missingCoursesForPathway(programId, userId);
+    }
+
+    // Project a hypothetical schedule for a desired major and optional minor.
+    // Combines missing courses for both programs, deduplicates by course id, and
+    // uses existing greedy packing logic to create a SchedulePlan.
+    public SchedulePlan projectForPrograms(String majorId, String minorId, String userId, int creditsPerSemester) {
+        if (creditsPerSemester <= 0) throw new IllegalArgumentException("creditsPerSemester must be positive");
+
+        List<Course> majorMissing = missingCoursesForProgram(majorId, userId);
+        List<Course> minorMissing = (minorId == null || minorId.isEmpty())
+                ? Collections.emptyList()
+                : missingCoursesForProgram(minorId, userId);
+
+        // Combine and deduplicate by course id (preserve insertion order: major first, then minor)
+        Map<Integer, Course> byId = new LinkedHashMap<>();
+        for (Course c : majorMissing) byId.put(c.id, c);
+        for (Course c : minorMissing) byId.putIfAbsent(c.id, c);
+
+        List<Course> combined = new ArrayList<>(byId.values());
+
+        SchedulePlan plan = new SchedulePlan();
+        if (combined.isEmpty()) return plan;
+
+        // Reuse existing greedy packer to create semester buckets
+        List<List<Course>> buckets = packCoursesGreedy(combined, creditsPerSemester);
+        int idx = 1;
+        for (List<Course> bucket : buckets) {
+            SemesterPlan sem = new SemesterPlan("Semester " + (idx++));
+            sem.courses.addAll(bucket);
+            plan.semesters.add(sem);
+        }
+        return plan;
+    }
+
+
 }

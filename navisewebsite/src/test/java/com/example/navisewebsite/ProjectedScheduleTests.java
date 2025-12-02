@@ -303,4 +303,43 @@ public class ProjectedScheduleTests {
         assertTrue(out.contains("MW 10:00-11:15"));
         assertTrue(out.contains("Test Course"));
     }
+
+    @Test
+    public void testProjectForPrograms_combinesMajorAndMinorAndDeduplicates() {
+        InMemoryCourseRepo cr = new InMemoryCourseRepo();
+        // Course 100 satisfies both major and minor; should appear once
+        ProjectedSchedule.Course shared = new ProjectedSchedule.Course(100, "SHARED101", 3, "Shared", "");
+        ProjectedSchedule.Course majorOnly = new ProjectedSchedule.Course(101, "MAJ101", 4, "Major Only", "");
+        ProjectedSchedule.Course minorOnly = new ProjectedSchedule.Course(102, "MIN101", 3, "Minor Only", "");
+        cr.addPathway("MAJOR", shared, majorOnly);
+        cr.addPathway("MINOR", shared, minorOnly);
+
+        InMemoryUserRepo ur = new InMemoryUserRepo();
+        ur.setCompleted("uProg"); // none completed
+
+        ProjectedSchedule ps = new ProjectedSchedule(cr, ur);
+        ProjectedSchedule.SchedulePlan plan = ps.projectForPrograms("MAJOR", "MINOR", "uProg", 7);
+
+        // Expect combined 3 courses scheduled across semesters
+        assertEquals(3, plan.totalCourses());
+        // Ensure shared course appears only once
+        long sharedCount = plan.semesters.stream()
+                .flatMap(s -> s.courses.stream())
+                .filter(c -> "SHARED101".equals(c.code))
+                .count();
+        assertEquals(1, sharedCount);
+}
+
+    @Test
+    public void testMissingCoursesForProgram_respectsCompletedCourses() {
+        InMemoryCourseRepo cr = new InMemoryCourseRepo();
+        cr.addPathway("MAJOR", new ProjectedSchedule.Course(200, "M200", 3, "M200", ""));
+        InMemoryUserRepo ur = new InMemoryUserRepo();
+        ur.setCompleted("uX", 200);
+
+        ProjectedSchedule ps = new ProjectedSchedule(cr, ur);
+        List<ProjectedSchedule.Course> missing = ps.missingCoursesForProgram("MAJOR", "uX");
+        assertTrue(missing.isEmpty());
+    }
+
 }
