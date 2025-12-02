@@ -202,9 +202,12 @@ public class ProjectedScheduleTests {
     @Test
     public void testMergeWithExistingSchedule_respectsEightSemesterCap() {
         InMemoryCourseRepo cr = new InMemoryCourseRepo();
-        // Create many courses to exceed 8 semesters
+        // Create many courses that will force UNSCHEDULED scenario
+        // With 2 existing semesters already at 12 credits, we can add max 6 more semesters
+        // Each new semester can hold max 21 credits = 126 credits in 6 new semesters
+        // 50 courses * 3 credits = 150 credits total, so 24+ credits cannot be scheduled
         List<ProjectedSchedule.Course> many = new ArrayList<>();
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 50; i++) {
             many.add(new ProjectedSchedule.Course(500 + i, "C" + (500 + i), 3, "Course " + i, ""));
         }
         cr.addPathway("MANY", many.toArray(new ProjectedSchedule.Course[0]));
@@ -225,10 +228,10 @@ public class ProjectedScheduleTests {
         // Schedule should not exceed 8 semesters
         assertTrue(result.mergedSchedule.semesters.size() <= 8);
 
-        // Check for UNSCHEDULED courses
+        // With 50 courses needing 150 credits and limited space, there must be UNSCHEDULED courses
         boolean hasUnscheduled = result.addedCourses.stream()
                 .anyMatch(a -> "UNSCHEDULED".equals(a.semesterLabel));
-        assertTrue(hasUnscheduled);
+        assertTrue(hasUnscheduled, "Expected some courses to be UNSCHEDULED due to 8 semester cap");
 
         // No semester should exceed 21 credits
         for (ProjectedSchedule.SemesterPlan sem : result.mergedSchedule.semesters) {
