@@ -1,0 +1,8 @@
+echo "Running mvn -B test before push..."
+mvn -B test
+rc=$?
+if [ $rc -ne 0 ]; then
+  echo "Tests failed. Push aborted."
+  exit $rc
+fi
+exit 0
