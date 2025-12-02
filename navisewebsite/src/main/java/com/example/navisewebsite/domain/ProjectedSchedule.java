@@ -1,8 +1,10 @@
-package com.example.navisewebsite.domain;    
+package com.example.navisewebsite.domain;
 
 import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
+
+//Utilities for projecting and merging course schedules for a pathway and user.
 
 public class ProjectedSchedule {
 
@@ -113,33 +115,14 @@ public class ProjectedSchedule {
         return remainingCredits(pathwayId, userId) <= 9;
     }
 
-    // Estimate semesters needed using greedy packing
+    // Estimate semesters needed using greedy packing (largest-first)
     public int estimateSemestersNeeded(String pathwayId, String userId, int creditsPerSemester) {
         if (creditsPerSemester <= 0) throw new IllegalArgumentException("creditsPerSemester must be positive");
         List<Course> missing = missingCoursesForPathway(pathwayId, userId);
         if (missing.isEmpty()) return 0;
 
-        List<Course> sorted = new ArrayList<>(missing);
-        sorted.sort(Comparator.comparingInt((Course c) -> c.credits).reversed());
-
-        boolean[] used = new boolean[sorted.size()];
-        int remaining = sorted.size();
-        int semesters = 0;
-
-        while (remaining > 0) {
-            semesters++;
-            int capacity = creditsPerSemester;
-            for (int i = 0; i < sorted.size(); i++) {
-                if (used[i]) continue;
-                Course c = sorted.get(i);
-                if (c.credits <= capacity) {
-                    used[i] = true;
-                    capacity -= c.credits;
-                    remaining--;
-                }
-            }
-        }
-        return semesters;
+        List<List<Course>> buckets = packCoursesGreedy(missing, creditsPerSemester);
+        return buckets.size();
     }
 
     // Project missing courses into semester buckets
@@ -148,29 +131,45 @@ public class ProjectedSchedule {
         SchedulePlan plan = new SchedulePlan();
         if (missing.isEmpty()) return plan;
 
-        List<Course> sorted = new ArrayList<>(missing);
+        List<List<Course>> buckets = packCoursesGreedy(missing, creditsPerSemester);
+        int idx = 1;
+        for (List<Course> bucket : buckets) {
+            SemesterPlan sem = new SemesterPlan("Semester " + (idx++));
+            sem.courses.addAll(bucket);
+            plan.semesters.add(sem);
+        }
+        return plan;
+    }
+
+    /*
+      Greedy bin-packing: sort descending by credits and fill each semester until capacity.
+      Returns a list of buckets (each bucket is a list of courses for one semester).
+      This preserves the original largest-first packing behavior.
+     */
+    private List<List<Course>> packCoursesGreedy(List<Course> courses, int creditsPerSemester) {
+        List<Course> sorted = new ArrayList<>(courses);
         sorted.sort(Comparator.comparingInt((Course c) -> c.credits).reversed());
 
         boolean[] used = new boolean[sorted.size()];
         int remaining = sorted.size();
-        int semIndex = 1;
+        List<List<Course>> buckets = new ArrayList<>();
 
         while (remaining > 0) {
-            SemesterPlan sem = new SemesterPlan("Semester " + semIndex++);
             int capacity = creditsPerSemester;
+            List<Course> bucket = new ArrayList<>();
             for (int i = 0; i < sorted.size(); i++) {
                 if (used[i]) continue;
                 Course c = sorted.get(i);
                 if (c.credits <= capacity) {
-                    sem.courses.add(c);
                     used[i] = true;
+                    bucket.add(c);
                     capacity -= c.credits;
                     remaining--;
                 }
             }
-            plan.semesters.add(sem);
+            buckets.add(bucket);
         }
-        return plan;
+        return buckets;
     }
 
     // Merge missing courses into existing schedule with constraints
@@ -184,12 +183,7 @@ public class ProjectedSchedule {
         final int maxSemesters = 8;
 
         // Defensive copy of original
-        SchedulePlan merged = new SchedulePlan();
-        for (SemesterPlan s : original.semesters) {
-            SemesterPlan copy = new SemesterPlan(s.semesterLabel);
-            copy.courses.addAll(s.courses);
-            merged.semesters.add(copy);
-        }
+        SchedulePlan merged = copySchedulePlan(original);
 
         List<Course> missing = missingCoursesForPathway(pathwayId, userId);
         missing.sort(Comparator.comparingInt((Course c) -> c.credits).reversed());
@@ -199,72 +193,25 @@ public class ProjectedSchedule {
 
         // First pass: bring existing semesters to minCreditsPerSemester
         for (SemesterPlan sem : merged.semesters) {
-            while (sem.totalCredits() < minCreditsPerSemester && !remaining.isEmpty()) {
-                boolean placed = false;
-                for (int i = 0; i < remaining.size(); i++) {
-                    Course c = remaining.get(i);
-                    if (sem.totalCredits() + c.credits <= maxCreditsPerSemester) {
-                        sem.courses.add(c);
-                        added.add(new AddedCourseRecord(c, sem.semesterLabel));
-                        remaining.remove(i);
-                        placed = true;
-                        break;
-                    }
-                }
-                if (!placed) break;
-            }
+            fillSemesterToMinimum(sem, remaining, minCreditsPerSemester, maxCreditsPerSemester, added);
         }
 
-        // Second pass: fill toward targetCreditsPerSemester
+        // Second pass: fill toward targetCreditsPerSemester (but never exceed max)
         for (SemesterPlan sem : merged.semesters) {
-            while (sem.totalCredits() < targetCreditsPerSemester && !remaining.isEmpty()) {
-                boolean placed = false;
-                for (int i = 0; i < remaining.size(); i++) {
-                    Course c = remaining.get(i);
-                    if (sem.totalCredits() + c.credits <= Math.min(maxCreditsPerSemester, targetCreditsPerSemester)) {
-                        sem.courses.add(c);
-                        added.add(new AddedCourseRecord(c, sem.semesterLabel));
-                        remaining.remove(i);
-                        placed = true;
-                        break;
-                    }
-                }
-                if (!placed) break;
-            }
+            fillSemesterToTarget(sem, remaining, targetCreditsPerSemester, maxCreditsPerSemester, added);
         }
 
         // Third pass: create new semesters up to maxSemesters
         int nextSemIndex = merged.semesters.size() + 1;
         while (!remaining.isEmpty() && merged.semesters.size() < maxSemesters) {
             SemesterPlan newSem = new SemesterPlan("Semester " + nextSemIndex++);
-            while (newSem.totalCredits() < targetCreditsPerSemester && !remaining.isEmpty()) {
-                boolean placed = false;
-                for (int i = 0; i < remaining.size(); i++) {
-                    Course c = remaining.get(i);
-                    if (newSem.totalCredits() + c.credits <= maxCreditsPerSemester) {
-                        newSem.courses.add(c);
-                        added.add(new AddedCourseRecord(c, newSem.semesterLabel));
-                        remaining.remove(i);
-                        placed = true;
-                        break;
-                    }
-                }
-                if (!placed) break;
-            }
-            // Try to reach minCreditsPerSemester if below
+            fillSemesterToTarget(newSem, remaining, targetCreditsPerSemester, maxCreditsPerSemester, added);
+
+            // If still below minimum, try to reach minimum
             if (newSem.totalCredits() < minCreditsPerSemester && !remaining.isEmpty()) {
-                for (int i = 0; i < remaining.size(); ) {
-                    Course c = remaining.get(i);
-                    if (newSem.totalCredits() + c.credits <= maxCreditsPerSemester) {
-                        newSem.courses.add(c);
-                        added.add(new AddedCourseRecord(c, newSem.semesterLabel));
-                        remaining.remove(i);
-                    } else {
-                        i++;
-                    }
-                    if (newSem.totalCredits() >= minCreditsPerSemester) break;
-                }
+                fillSemesterToMinimum(newSem, remaining, minCreditsPerSemester, maxCreditsPerSemester, added);
             }
+
             merged.semesters.add(newSem);
         }
 
@@ -274,6 +221,65 @@ public class ProjectedSchedule {
         }
 
         return new MergeResult(merged, added);
+    }
+
+    private SchedulePlan copySchedulePlan(SchedulePlan original) {
+        SchedulePlan copy = new SchedulePlan();
+        for (SemesterPlan s : original.semesters) {
+            SemesterPlan semCopy = new SemesterPlan(s.semesterLabel);
+            semCopy.courses.addAll(s.courses);
+            copy.semesters.add(semCopy);
+        }
+        return copy;
+    }
+
+    /*
+      Try to add courses from 'remaining' into 'sem' until sem.totalCredits() >= minTarget,
+      but never exceed maxPerSemester. Records additions into 'added'.
+     */
+    private void fillSemesterToMinimum(SemesterPlan sem,
+                                       List<Course> remaining,
+                                       int minTarget,
+                                       int maxPerSemester,
+                                       List<AddedCourseRecord> added) {
+        while (sem.totalCredits() < minTarget && !remaining.isEmpty()) {
+            boolean placed = false;
+            for (int i = 0; i < remaining.size(); i++) {
+                Course c = remaining.get(i);
+                if (sem.totalCredits() + c.credits <= maxPerSemester) {
+                    sem.courses.add(c);
+                    added.add(new AddedCourseRecord(c, sem.semesterLabel));
+                    remaining.remove(i);
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) break;
+        }
+    }
+
+    // Try to add courses from 'remaining' into 'sem' until sem.totalCredits() >= target,
+     // but never exceed maxPerSemester. Records additions into 'added'.
+
+    private void fillSemesterToTarget(SemesterPlan sem,
+                                      List<Course> remaining,
+                                      int target,
+                                      int maxPerSemester,
+                                      List<AddedCourseRecord> added) {
+        while (sem.totalCredits() < target && !remaining.isEmpty()) {
+            boolean placed = false;
+            for (int i = 0; i < remaining.size(); i++) {
+                Course c = remaining.get(i);
+                if (sem.totalCredits() + c.credits <= Math.min(maxPerSemester, target)) {
+                    sem.courses.add(c);
+                    added.add(new AddedCourseRecord(c, sem.semesterLabel));
+                    remaining.remove(i);
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) break;
+        }
     }
 
     public static class MergeResult {
@@ -304,12 +310,7 @@ public class ProjectedSchedule {
                     ps.setString(1, pathwayId);
                     try (ResultSet rs = ps.executeQuery()) {
                         while (rs.next()) {
-                            out.add(new Course(
-                                    safeInt(rs, "id"),
-                                    safeString(rs, "code"),
-                                    safeInt(rs, "credits"),
-                                    safeString(rs, "title"),
-                                    safeString(rs, "meeting_time")));
+                            out.add(buildCourseFromResultSet(rs, "id", "code", "credits", "title", "meeting_time"));
                         }
                     }
                 } catch (SQLException e) {
@@ -326,12 +327,7 @@ public class ProjectedSchedule {
                     ps.setInt(1, id);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
-                            return Optional.of(new Course(
-                                    safeInt(rs, "id"),
-                                    safeString(rs, "code"),
-                                    safeInt(rs, "credits"),
-                                    safeString(rs, "title"),
-                                    safeString(rs, "meeting_time")));
+                            return Optional.of(buildCourseFromResultSet(rs, "id", "code", "credits", "title", "meeting_time"));
                         }
                     }
                 } catch (SQLException e) {
@@ -348,12 +344,7 @@ public class ProjectedSchedule {
                     ps.setString(1, code);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
-                            return Optional.of(new Course(
-                                    safeInt(rs, "id"),
-                                    safeString(rs, "code"),
-                                    safeInt(rs, "credits"),
-                                    safeString(rs, "title"),
-                                    safeString(rs, "meeting_time")));
+                            return Optional.of(buildCourseFromResultSet(rs, "id", "code", "credits", "title", "meeting_time"));
                         }
                     }
                 } catch (SQLException e) {
@@ -371,12 +362,7 @@ public class ProjectedSchedule {
                     ps.setString(1, pathwayId);
                     try (ResultSet rs = ps.executeQuery()) {
                         while (rs.next()) {
-                            out.add(new Course(
-                                    safeInt(rs, "id"),
-                                    safeString(rs, "code"),
-                                    safeInt(rs, "credits"),
-                                    safeString(rs, "title"),
-                                    ""));
+                            out.add(buildCourseFromResultSet(rs, "id", "code", "credits", "title", null));
                         }
                     }
                 } catch (SQLException ex) {
@@ -385,12 +371,13 @@ public class ProjectedSchedule {
                 return out;
             }
 
-            private int safeInt(ResultSet rs, String col) {
-                try { return rs.getInt(col); } catch (SQLException e) { return 0; }
-            }
-
-            private String safeString(ResultSet rs, String col) {
-                try { return rs.getString(col); } catch (SQLException e) { return ""; }
+            private Course buildCourseFromResultSet(ResultSet rs, String idCol, String codeCol, String creditsCol, String titleCol, String meetingCol) throws SQLException {
+                int id = safeInt(rs, idCol);
+                String code = safeString(rs, codeCol);
+                int credits = safeInt(rs, creditsCol);
+                String title = titleCol == null ? "" : safeString(rs, titleCol);
+                String meeting = meetingCol == null ? "" : safeString(rs, meetingCol);
+                return new Course(id, code, credits, title, meeting);
             }
         };
     }
@@ -433,10 +420,6 @@ public class ProjectedSchedule {
                     // final fallback: empty
                 }
                 return out;
-            }
-
-            private int safeInt(ResultSet rs, String col) {
-                try { return rs.getInt(col); } catch (SQLException e) { return 0; }
             }
         };
     }
