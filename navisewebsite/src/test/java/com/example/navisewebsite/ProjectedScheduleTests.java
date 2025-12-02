@@ -1,17 +1,10 @@
-package com.example.navisewebsite.domain;    
+package com.example.navisewebsite;    
 
 import org.junit.jupiter.api.Test;
-
 import java.util.*;
-
 import static org.junit.jupiter.api.Assertions.*;
+import com.example.navisewebsite.domain.ProjectedSchedule;
 
-/**
- * ProjectedScheduleTests
- * 
- * Unit tests for ProjectedSchedule methods (constructors not tested).
- * Uses in-memory repositories for DB-independent testing.
- */
 public class ProjectedScheduleTests {
 
     // In-memory CourseRepository
