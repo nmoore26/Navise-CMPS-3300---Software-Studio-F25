@@ -12,9 +12,12 @@ the production or test database and to create necessary tables if they do not ex
 
 public class DatabaseUtil {
 
-    // --- Production DB ---
-    // Use absolute path to ensure the database file is created in the navisewebsite directory
-    private static final String PROD_DB_URL = "jdbc:sqlite:courses.db";
+    // --- Production DBs ---
+    // Use paths relative to application working dir (navisewebsite)
+    // Separate DB files: courses.db for course/program data; users.db for user data
+    private static final String COURSES_DB_URL = "jdbc:sqlite:courses.db";
+    private static final String USERS_DB_URL = "jdbc:sqlite:users.db";
+    private static final String STUDENT_INFO_DB_URL = "jdbc:sqlite:student_info.db";
 
     // --- Test DB (shared in-memory) ---
     // Use a file: URI with mode=memory and cache=shared so multiple connections
@@ -82,24 +85,34 @@ public class DatabaseUtil {
             // Return a fresh connection to the shared in-memory database.
             return DriverManager.getConnection(TEST_DB_URL);
         }
-        return DriverManager.getConnection(PROD_DB_URL);
+        // Default connection points to courses DB for general reads/writes
+        return DriverManager.getConnection(COURSES_DB_URL);
+    }
+
+    /** Get a connection specifically to the users DB (production only). */
+    public static Connection connectUsers() throws SQLException {
+        if (useTestDB) {
+            // In tests, keep users in shared in-memory DB to simplify isolation
+            return DriverManager.getConnection(TEST_DB_URL);
+        }
+        return DriverManager.getConnection(USERS_DB_URL);
+    }
+
+    /** Get a connection specifically to the student_info DB (production only). */
+    public static Connection connectStudentInfo() throws SQLException {
+        if (useTestDB) {
+            // In tests, use the shared in-memory DB
+            return DriverManager.getConnection(TEST_DB_URL);
+        }
+        return DriverManager.getConnection(STUDENT_INFO_DB_URL);
     }
 
     // =====================================================================
     // PRODUCTION DATABASE INITIALIZER
     // =====================================================================
     public static void initializeDatabase() {
-        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
-
-            String createUsers = """
-                CREATE TABLE IF NOT EXISTS users (
-                    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    email TEXT NOT NULL UNIQUE,
-                    password TEXT NOT NULL,
-                    user_type TEXT NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """;
+        // Initialize courses/programs in courses.db
+        try (Connection conn = DriverManager.getConnection(COURSES_DB_URL); Statement stmt = conn.createStatement()) {
 
             String createCourses = """
                 CREATE TABLE IF NOT EXISTS courses (
@@ -142,15 +155,54 @@ public class DatabaseUtil {
                     num_classes INTEGER
                 );
             """;
-
-            stmt.execute(createUsers);
+            // Create tables in courses DB
             stmt.execute(createCourses);
             stmt.execute(createPrograms);
             stmt.execute(createProgramCourses);
             stmt.execute(createNTC);
 
-            System.out.println("Production database initialized.");
+            System.out.println("Courses/programs database schema initialized.");
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Initialize users in users.db
+        try (Connection connUsers = DriverManager.getConnection(USERS_DB_URL); Statement stmtUsers = connUsers.createStatement()) {
+            String createUsers = """
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL,
+                    first_name TEXT,
+                    last_name TEXT,
+                    user_type TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """;
+            stmtUsers.execute(createUsers);
+            System.out.println("Users database initialized.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Initialize student info in student_info.db
+        try (Connection connStudent = DriverManager.getConnection(STUDENT_INFO_DB_URL); Statement stmtStudent = connStudent.createStatement()) {
+            String createStudentInfo = """
+                CREATE TABLE IF NOT EXISTS student_info (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    first_name TEXT,
+                    last_name TEXT,
+                    major TEXT,
+                    minor TEXT,
+                    past_courses TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(user_id)
+                );
+            """;
+            stmtStudent.execute(createStudentInfo);
+            System.out.println("Student info database initialized.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -171,6 +223,8 @@ public class DatabaseUtil {
                     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     email TEXT NOT NULL UNIQUE,
                     password TEXT NOT NULL,
+                    first_name TEXT,
+                    last_name TEXT,
                     user_type TEXT NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );

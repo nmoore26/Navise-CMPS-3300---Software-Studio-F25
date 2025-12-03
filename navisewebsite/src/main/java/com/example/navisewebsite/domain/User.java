@@ -9,6 +9,8 @@ public class User {
     private String email;
     private String password; // Should be hashed with BCrypt
     private String userType; // "student" or "admin"
+    private String firstName;
+    private String lastName;
     
     // Constructor
     public User(int userId, String email, String password, String userType) {
@@ -16,6 +18,15 @@ public class User {
         this.email = email;
         this.password = password;
         this.userType = userType;
+    }
+    
+    public User(int userId, String email, String password, String userType, String firstName, String lastName) {
+        this.userId = userId;
+        this.email = email;
+        this.password = password;
+        this.userType = userType;
+        this.firstName = firstName;
+        this.lastName = lastName;
     }
     
     // Getters
@@ -51,4 +62,10 @@ public class User {
     public void setUserType(String userType) {
         this.userType = userType;
     }
+    
+    // getters and setters for firstName and lastName
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 }

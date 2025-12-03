@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpSession;
 import java.util.Optional;
-import java.net.URLEncoder;
 
 @Controller
 public class LoginController {

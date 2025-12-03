@@ -1,6 +1,7 @@
 package com.example.navisewebsite.controller;
 
 import com.example.navisewebsite.repository.UserRepository;
+import com.example.navisewebsite.repository.StudentInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,6 +20,9 @@ public class RegistrationController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private StudentInfoRepository studentInfoRepository;
+
     /**
      * Display the registration form
      */
@@ -36,6 +40,8 @@ public class RegistrationController {
                           @RequestParam String email,
                           @RequestParam String password,
                           @RequestParam String confirmPassword,
+                          @RequestParam(required = false) String major,
+                          @RequestParam(required = false) String minor,
                           HttpSession session,
                           Model model) {
 
@@ -76,15 +82,24 @@ public class RegistrationController {
             return "register";
         }
 
-        // Register the new student
-        // TODO: Hash the password with BCrypt before storing
-        int userId = userRepository.addStudent(email, password);
+    // Register the new student
+    // TODO: Hash the password with BCrypt before storing
+    int userId = userRepository.addStudent(email, password, firstName, lastName);
 
         if (userId > 0) {
+            // Persist student profile info
+            String majorVal = (major == null) ? "" : major.trim();
+            String minorVal = (minor == null) ? "" : minor.trim();
+            studentInfoRepository.insertStudentInfo(userId, firstName, lastName, majorVal, minorVal, "");
+
             // Store student info in session
             session.setAttribute("userId", userId);
             session.setAttribute("email", email);
             session.setAttribute("userType", "student");
+            session.setAttribute("firstName", firstName);
+            session.setAttribute("lastName", lastName);
+            session.setAttribute("major", majorVal);
+            session.setAttribute("minor", minorVal);
             
             model.addAttribute("message", "Registration successful! Welcome to Navise.");
             return "redirect:/student-home";

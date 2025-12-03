@@ -98,6 +98,59 @@ public class CourseRepository {
         return courses;
     }
 
+    // Count courses for seeder check
+    public int countCourses() {
+        String sql = "SELECT COUNT(*) AS c FROM courses";
+        try (Connection conn = DatabaseUtil.connect();
+             Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs.next()) return rs.getInt("c");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // Lightweight insert used by XLSX seeder (avoids building Course object)
+    public void insertCourse(String courseId,
+                             String courseName,
+                             String courseCode,
+                             int creditHours,
+                             String professor,
+                             String days,
+                             String time,
+                             String building,
+                             String room,
+                             String attributes,
+                             String prerequisites,
+                             String corequisites,
+                             String terms) {
+        String sql = """
+            INSERT INTO courses(course_id, course_name, course_code, credit_hours, professor, days,
+                time, building, room, attributes, prerequisites, corequisites,
+                terms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);
+            """;
+        try (Connection conn = DatabaseUtil.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, courseId);
+            pstmt.setString(2, courseName);
+            pstmt.setString(3, courseCode);
+            pstmt.setInt(4, creditHours);
+            pstmt.setString(5, professor);
+            pstmt.setString(6, days);
+            pstmt.setString(7, time);
+            pstmt.setString(8, building);
+            pstmt.setString(9, room);
+            pstmt.setString(10, attributes == null ? "" : attributes);
+            pstmt.setString(11, prerequisites == null ? "" : prerequisites);
+            pstmt.setString(12, corequisites == null ? "" : corequisites);
+            pstmt.setString(13, terms == null ? "" : terms);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private Course mapResultSetToCourse(ResultSet rs) throws SQLException {
     // Helper to safely split nullable CSV columns into lists
     String attrs = rs.getString("attributes");

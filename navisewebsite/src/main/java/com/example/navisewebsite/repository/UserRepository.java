@@ -19,8 +19,8 @@ public class UserRepository {
      * @return Optional containing the User if found
      */
     public Optional<User> findByEmail(String email) {
-        String sql = "SELECT user_id, email, password, user_type FROM users WHERE email = ?";
-        try (Connection conn = DatabaseUtil.connect();
+        String sql = "SELECT user_id, email, password, user_type, first_name, last_name FROM users WHERE email = ?";
+        try (Connection conn = DatabaseUtil.connectUsers();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, email);
@@ -41,8 +41,8 @@ public class UserRepository {
      * @return Optional containing the User if found
      */
     public Optional<User> findById(int userId) {
-        String sql = "SELECT user_id, email, password, user_type FROM users WHERE user_id = ?";
-        try (Connection conn = DatabaseUtil.connect();
+        String sql = "SELECT user_id, email, password, user_type, first_name, last_name FROM users WHERE user_id = ?";
+        try (Connection conn = DatabaseUtil.connectUsers();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, userId);
@@ -61,37 +61,49 @@ public class UserRepository {
      * Add a new student user to the database
      * @param email The student's email
      * @param hashedPassword The hashed password (use BCryptPasswordEncoder)
-     * @return true if successful, false otherwise
+     * @param firstName User's first name
+     * @param lastName User's last name
+     * @return generated user_id if success, -1 otherwise
      */
+    public int addStudent(String email, String hashedPassword, String firstName, String lastName) {
+        return addUser(email, hashedPassword, firstName, lastName, "student");
+    }
+
+    // Backward-compatible overload (used by existing tests)
     public int addStudent(String email, String hashedPassword) {
-        return addUser(email, hashedPassword, "student");
+        return addUser(email, hashedPassword, "", "", "student");
     }
     
     /**
      * Add a new admin user to the database
      * @param email The admin's email
      * @param hashedPassword The hashed password
-     * @return true if successful, false otherwise
+     * @param firstName Admin's first name
+     * @param lastName Admin's last name
+     * @return generated user_id if success, -1 otherwise
      */
+    public int addAdmin(String email, String hashedPassword, String firstName, String lastName) {
+        return addUser(email, hashedPassword, firstName, lastName, "admin");
+    }
+
+    // Backward-compatible overload (used by existing tests)
     public int addAdmin(String email, String hashedPassword) {
-        return addUser(email, hashedPassword, "admin");
+        return addUser(email, hashedPassword, "", "", "admin");
     }
     
     /**
      * Add a new user to the database
-     * @param email The user's email
-     * @param hashedPassword The hashed password
-     * @param userType "student" or "admin"
-     * @return The generated user_id if successful, -1 if failed
      */
-    private int addUser(String email, String hashedPassword, String userType) {
-        String sql = "INSERT INTO users (email, password, user_type) VALUES (?, ?, ?)";
-        try (Connection conn = DatabaseUtil.connect();
+    private int addUser(String email, String hashedPassword, String firstName, String lastName, String userType) {
+        String sql = "INSERT INTO users (email, password, first_name, last_name, user_type) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseUtil.connectUsers();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
             pstmt.setString(1, email);
             pstmt.setString(2, hashedPassword);
-            pstmt.setString(3, userType);
+            pstmt.setString(3, firstName);
+            pstmt.setString(4, lastName);
+            pstmt.setString(5, userType);
             
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
@@ -111,13 +123,10 @@ public class UserRepository {
     
     /**
      * Update a user's password
-     * @param userId The user's ID
-     * @param hashedPassword The new hashed password
-     * @return true if successful, false otherwise
      */
     public boolean updatePassword(int userId, String hashedPassword) {
         String sql = "UPDATE users SET password = ? WHERE user_id = ?";
-        try (Connection conn = DatabaseUtil.connect();
+        try (Connection conn = DatabaseUtil.connectUsers();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, hashedPassword);
@@ -132,12 +141,10 @@ public class UserRepository {
     
     /**
      * Delete a user by ID
-     * @param userId The user's ID
-     * @return true if successful, false otherwise
      */
     public boolean deleteUser(int userId) {
         String sql = "DELETE FROM users WHERE user_id = ?";
-        try (Connection conn = DatabaseUtil.connect();
+        try (Connection conn = DatabaseUtil.connectUsers();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setInt(1, userId);
@@ -156,7 +163,9 @@ public class UserRepository {
             rs.getInt("user_id"),
             rs.getString("email"),
             rs.getString("password"),
-            rs.getString("user_type")
+            rs.getString("user_type"),
+            rs.getString("first_name"),
+            rs.getString("last_name")
         );
     }
 }
