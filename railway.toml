@@ -1,5 +1,6 @@
-[projectDir]
-projectPath = "navisewebsite"
+[build]
+builder = "dockerfile"
+dockerfile = "navisewebsite/Dockerfile"
 
 [deploy]
-startCommand = "bash start.sh"
+startCommand = "java -Dserver.port=8080 -jar /app/app.jar"
