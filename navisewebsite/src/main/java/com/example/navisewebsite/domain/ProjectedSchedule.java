@@ -305,17 +305,18 @@ public class ProjectedSchedule {
     }
 
     // SQLite CourseRepository with defensive fallback queries
-    public static CourseRepository sqliteCourseRepository(String sqliteFile) {
+    // PostgreSQL CourseRepository implementation
+    public static CourseRepository postgresCourseRepository() {
         return new CourseRepository() {
             private Connection connect() throws SQLException {
-                return DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
+                return DriverManager.getConnection("jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway", "postgres", "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp");
             }
 
             @Override
             public List<Course> coursesForPathway(String pathwayId) {
-                String sql = "SELECT c.id, c.code, c.credits, c.title, c.meeting_time " +
-                        "FROM pathway_courses pc JOIN courses c ON pc.course_id = c.id " +
-                        "WHERE pc.pathway_id = ?";
+        String sql = "SELECT c.id, c.code, c.credits, c.title, c.meeting_time " +
+            "FROM pathway_courses pc JOIN courses c ON pc.course_id = c.id " +
+            "WHERE pc.pathway_id = ?";
                 List<Course> out = new ArrayList<>();
                 try (Connection conn = connect();
                      PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -326,7 +327,7 @@ public class ProjectedSchedule {
                         }
                     }
                 } catch (SQLException e) {
-                    return tryAlternateCourseQuery(sqliteFile, pathwayId);
+                    // ignore
                 }
                 return out;
             }
@@ -365,23 +366,6 @@ public class ProjectedSchedule {
                 return Optional.empty();
             }
 
-            private List<Course> tryAlternateCourseQuery(String sqliteFile, String pathwayId) {
-                List<Course> out = new ArrayList<>();
-                String altSql = "SELECT c.id, c.course_code AS code, c.credit_hours AS credits, c.name AS title, '' AS meeting_time " +
-                        "FROM pathway_courses pc JOIN courses c ON pc.course_id = c.id WHERE pc.pathway_id = ?";
-                try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
-                     PreparedStatement ps = conn.prepareStatement(altSql)) {
-                    ps.setString(1, pathwayId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            out.add(buildCourseFromResultSet(rs, "id", "code", "credits", "title", null));
-                        }
-                    }
-                } catch (SQLException ex) {
-                    // final fallback: empty
-                }
-                return out;
-            }
 
             private Course buildCourseFromResultSet(ResultSet rs, String idCol, String codeCol, String creditsCol, String titleCol, String meetingCol) throws SQLException {
                 int id = safeInt(rs, idCol);
@@ -395,10 +379,11 @@ public class ProjectedSchedule {
     }
 
     // SQLite UserRepository
-    public static UserRepository sqliteUserRepository(String sqliteFile) {
+    // PostgreSQL UserRepository implementation
+    public static UserRepository postgresUserRepository() {
         return new UserRepository() {
             private Connection connect() throws SQLException {
-                return DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
+                return DriverManager.getConnection("jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway", "postgres", "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp");
             }
 
             @Override
@@ -414,37 +399,23 @@ public class ProjectedSchedule {
                         }
                     }
                 } catch (SQLException e) {
-                    out = tryAlternateUserQuery(sqliteFile, userId);
+                    // ignore
                 }
                 return out;
             }
 
-            private List<Integer> tryAlternateUserQuery(String sqliteFile, String userId) {
-                List<Integer> out = new ArrayList<>();
-                String alt = "SELECT courseid AS course_id FROM user_courses WHERE userid = ?";
-                try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
-                     PreparedStatement ps = conn.prepareStatement(alt)) {
-                    ps.setString(1, userId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) out.add(safeInt(rs, "course_id"));
-                    }
-                } catch (SQLException ex) {
-                    // final fallback: empty
-                }
-                return out;
-            }
         };
     }
 
     // Load student schedule from database grouped by semester_label
-    public static SchedulePlan loadStudentScheduleFromDb(String sqliteFile, String userId) {
+    public static SchedulePlan loadStudentScheduleFromDb(String userId) {
         SchedulePlan plan = new SchedulePlan();
         String sql = "SELECT uc.semester_label, c.id, c.code, c.credits, c.title, c.meeting_time " +
                 "FROM user_courses uc JOIN courses c ON uc.course_id = c.id WHERE uc.user_id = ? " +
                 "ORDER BY uc.semester_label, c.code";
         Map<String, SemesterPlan> map = new LinkedHashMap<>();
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = DriverManager.getConnection("jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway", "postgres", "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp");
+           PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -461,41 +432,15 @@ public class ProjectedSchedule {
                 }
             }
         } catch (SQLException e) {
-            return tryAlternateLoad(sqliteFile, userId);
+            // ignore
         }
         plan.semesters.addAll(map.values());
         return plan;
     }
 
-    private static SchedulePlan tryAlternateLoad(String sqliteFile, String userId) {
-        SchedulePlan plan = new SchedulePlan();
-        String alt = "SELECT uc.semester AS semester_label, c.id, c.course_code AS code, c.credit_hours AS credits, c.name AS title " +
-                "FROM user_courses uc JOIN courses c ON uc.course_id = c.id WHERE uc.user_id = ? ORDER BY uc.semester, c.course_code";
-        Map<String, SemesterPlan> map = new LinkedHashMap<>();
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
-             PreparedStatement ps = conn.prepareStatement(alt)) {
-            ps.setString(1, userId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String sem = safeString(rs, "semester_label");
-                    if (sem.isEmpty()) sem = "Semester 1";
-                    SemesterPlan sp = map.computeIfAbsent(sem, SemesterPlan::new);
-                    Course c = new Course(
-                            safeInt(rs, "id"),
-                            safeString(rs, "code"),
-                            safeInt(rs, "credits"),
-                            safeString(rs, "title"),
-                            "");
-                    sp.courses.add(c);
-                }
-            }
-        } catch (SQLException ex) {
-            // final fallback: empty
-        }
-        plan.semesters.addAll(map.values());
-        return plan;
-    }
-
+    // Removed obsolete tryAlternateLoad fallback method and all sqliteFile references
+        // Removed obsolete tryAlternateLoad fallback method and all sqliteFile references
+    
     private static int safeInt(ResultSet rs, String col) {
         try { return rs.getInt(col); } catch (SQLException e) { return 0; }
     }

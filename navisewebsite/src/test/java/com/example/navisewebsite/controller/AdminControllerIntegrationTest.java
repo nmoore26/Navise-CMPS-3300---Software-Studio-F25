@@ -31,7 +31,6 @@ public class AdminControllerIntegrationTest {
     @BeforeEach
     public void setup() throws Exception {
         // Ensure all connections use the shared in-memory test DB
-        com.example.navisewebsite.repository.DatabaseUtil.useTestDatabase();
         // Explicitly initialize schema for in-memory DB
         try (java.sql.Connection conn = com.example.navisewebsite.repository.DatabaseUtil.connect();
              java.sql.Statement stmt = conn.createStatement()) {
@@ -54,7 +53,7 @@ public class AdminControllerIntegrationTest {
             """);
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS programs (
-                    program_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        program_id SERIAL PRIMARY KEY,
                     program_name TEXT NOT NULL,
                     program_type TEXT NOT NULL
                 );
@@ -64,13 +63,13 @@ public class AdminControllerIntegrationTest {
                     program_id INTEGER NOT NULL,
                     course_id TEXT NOT NULL,
                     PRIMARY KEY (program_id, course_id),
-                    FOREIGN KEY (program_id) REFERENCES programs(program_id),
-                    FOREIGN KEY (course_id) REFERENCES courses(course_id)
+                        FOREIGN KEY (program_id) REFERENCES programs(program_id) ON DELETE CASCADE,
+                        FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
                 );
             """);
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS student_info (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        id SERIAL PRIMARY KEY,
                     user_id INTEGER NOT NULL,
                     first_name TEXT,
                     last_name TEXT,

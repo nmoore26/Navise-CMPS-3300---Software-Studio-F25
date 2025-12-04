@@ -14,11 +14,10 @@ import java.util.Map;
  */
 public class ScheduleLoaderService {
     
-    private final String sqliteFile;
-    
-    public ScheduleLoaderService(String sqliteFile) {
-        this.sqliteFile = sqliteFile;
-    }
+    // PostgreSQL connection details (update as needed)
+    private static final String DB_URL = "jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway";
+    private static final String DB_USER = "postgres";
+    private static final String DB_PASSWORD = "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp";
     
     /**
      * Load a student's schedule from database, grouped by semester.
@@ -67,7 +66,7 @@ public class ScheduleLoaderService {
     }
     
     private Connection connect() throws SQLException {
-        return DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
+    return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
     
     /**

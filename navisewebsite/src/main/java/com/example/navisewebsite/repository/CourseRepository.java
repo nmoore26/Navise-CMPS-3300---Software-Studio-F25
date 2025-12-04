@@ -47,11 +47,15 @@ public class CourseRepository implements CourseRepositoryInterface {
     }
     // Remove a course by its ID
     public void removeCourse(Course course) {
-        String sql = "DELETE FROM courses WHERE course_id = ?";
+        String sqlDeleteProgramCourses = "DELETE FROM program_courses WHERE course_id = ?";
+        String sqlDeleteCourse = "DELETE FROM courses WHERE course_id = ?";
         try (Connection conn = DatabaseUtil.connect();
-            PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, course.get_courseID());
-            pstmt.executeUpdate();
+             PreparedStatement pstmt1 = conn.prepareStatement(sqlDeleteProgramCourses);
+             PreparedStatement pstmt2 = conn.prepareStatement(sqlDeleteCourse)) {
+            pstmt1.setString(1, course.get_courseID());
+            pstmt1.executeUpdate();
+            pstmt2.setString(1, course.get_courseID());
+            pstmt2.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }

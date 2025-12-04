@@ -20,8 +20,10 @@ import java.util.*;
 @Controller
 public class StudentDataController {
     
-    private static final String DB_PATH = "student_info.db";
-    private static final String COURSES_DB_PATH = "courses.db";
+    // PostgreSQL connection details (should match application.properties)
+    private static final String DB_URL = "jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway";
+    private static final String DB_USER = "postgres";
+    private static final String DB_PASSWORD = "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp";
     
     // Helper to check authentication
     private boolean isAuthenticated(HttpSession session) {
@@ -49,7 +51,7 @@ public class StudentDataController {
             return "student-my-courses";
         }
         
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + DB_PATH)) {
+    try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String sql = "SELECT major, minor, past_courses FROM student_info WHERE user_id = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);
@@ -95,7 +97,7 @@ public class StudentDataController {
             return "student-degree-progress";
         }
         
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + DB_PATH)) {
+    try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             // Get student's major, minor, and past courses
             String sql = "SELECT major, minor, past_courses FROM student_info WHERE user_id = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -261,7 +263,7 @@ public class StudentDataController {
         List<Map<String, String>> completed = new ArrayList<>();
         List<Map<String, String>> remaining = new ArrayList<>();
         
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + COURSES_DB_PATH)) {
+    try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             // Get requirements for the program by joining programs -> program_courses -> courses
             String sql = "SELECT c.* FROM courses c " +
                     "JOIN program_courses pc ON c.course_id = pc.course_id " +
@@ -304,7 +306,7 @@ public class StudentDataController {
     
     private List<String> getAvailablePrograms(String type) throws SQLException {
         List<String> programs = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + COURSES_DB_PATH)) {
+    try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String sql = "SELECT DISTINCT program_name FROM programs WHERE program_type = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, type);
@@ -319,7 +321,7 @@ public class StudentDataController {
     
 /*      private List<String> getStudentCompletedCourses(Integer userId) throws SQLException {
         List<String> completedCourses = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + DB_PATH)) {
+    try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String sql = "SELECT past_courses FROM student_info WHERE user_id = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);
@@ -336,7 +338,7 @@ public class StudentDataController {
     private List<Map<String, Object>> getAllCoursesForProgram(String programName) throws SQLException {
         List<Map<String, Object>> courses = new ArrayList<>();
         
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + COURSES_DB_PATH)) {
+    try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             // Get ALL required courses for the program
             String sql = "SELECT c.course_id, c.course_name, c.credit_hours, c.professor, " +
                     "c.days, c.time, c.building, c.room " +
@@ -374,7 +376,7 @@ public class StudentDataController {
 /*     private List<Map<String, Object>> getCoursesForProgram(String programName, List<String> completedCourses) throws SQLException {
         List<Map<String, Object>> courses = new ArrayList<>();
         
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + COURSES_DB_PATH)) {
+    try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             // Get all required courses for the program that haven't been completed
             String sql = "SELECT c.course_id, c.course_name, c.credit_hours, c.professor, " +
                     "c.days, c.time, c.building, c.room " +

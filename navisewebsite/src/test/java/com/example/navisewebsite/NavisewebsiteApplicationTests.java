@@ -17,15 +17,14 @@ public class NavisewebsiteApplicationTests {
 
     @BeforeEach
     void setup() {
-        DatabaseUtil.useTestDatabase();      // switch connection and initialize once
         // Clear tables for each test to ensure clean state
         DatabaseUtil.clearUsersTable();
         try (java.sql.Connection conn = DatabaseUtil.connect();
              java.sql.Statement stmt = conn.createStatement()) {
-            stmt.execute("DELETE FROM courses");
-            stmt.execute("DELETE FROM programs");
-            stmt.execute("DELETE FROM program_courses");
-            stmt.execute("DELETE FROM ntc_requirements");
+            stmt.execute("TRUNCATE TABLE courses RESTART IDENTITY CASCADE");
+            stmt.execute("TRUNCATE TABLE programs RESTART IDENTITY CASCADE");
+            stmt.execute("TRUNCATE TABLE program_courses RESTART IDENTITY CASCADE");
+            stmt.execute("TRUNCATE TABLE ntc_requirements RESTART IDENTITY CASCADE");
         } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }

@@ -19,14 +19,13 @@ public class SQLiteScheduleRepository {
      * SQLite implementation of ScheduleCourseRepository.
      */
     public static class SQLiteCourseRepository implements ScheduleRepositoryInterfaces.ScheduleCourseRepository {
-        private final String sqliteFile;
-        
-        public SQLiteCourseRepository(String sqliteFile) {
-            this.sqliteFile = sqliteFile;
-        }
-        
+        // PostgreSQL connection details (update as needed)
+    private static final String DB_URL = "jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway";
+    private static final String DB_USER = "postgres";
+    private static final String DB_PASSWORD = "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp";
+
         private Connection connect() throws SQLException {
-            return DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
+            return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
         }
         
         @Override
@@ -125,14 +124,13 @@ public class SQLiteScheduleRepository {
      * SQLite implementation of UserRepository.
      */
     public static class SQLiteUserRepository implements ScheduleRepositoryInterfaces.ScheduleUserRepository {
-        private final String sqliteFile;
-        
-        public SQLiteUserRepository(String sqliteFile) {
-            this.sqliteFile = sqliteFile;
-        }
-        
+        // PostgreSQL connection details (update as needed)
+        private static final String DB_URL = "jdbc:postgresql://localhost:5432/postgres";
+        private static final String DB_USER = "postgres";
+        private static final String DB_PASSWORD = "password";
+
         private Connection connect() throws SQLException {
-            return DriverManager.getConnection("jdbc:sqlite:" + sqliteFile);
+            return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
         }
         
         @Override
@@ -173,10 +171,8 @@ public class SQLiteScheduleRepository {
         private List<Integer> lookupCourseIdsByCodes(String[] courseCodes) {
             List<Integer> ids = new ArrayList<>();
             // Need to connect to courses.db to look up course IDs
-            String courseDbPath = "courses.db";
             String sql = "SELECT courseID FROM courses WHERE course_code = ?";
-            
-            try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + courseDbPath)) {
+            try (Connection conn = connect()) {
                 for (String code : courseCodes) {
                     if (code.trim().isEmpty()) continue;
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {

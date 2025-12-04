@@ -19,9 +19,14 @@ public class UserRepositoryTest {
     @BeforeEach
     public void setUp() {
         // Initialize test database with fresh users table for each test
-        DatabaseUtil.useTestDatabase();
-        // Only clear the users table (tables are initialized once by useTestDatabase())
+        // Use TRUNCATE for PostgreSQL compatibility
         DatabaseUtil.clearUsersTable();
+        try (java.sql.Connection conn = DatabaseUtil.connect();
+             java.sql.Statement stmt = conn.createStatement()) {
+            stmt.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+        }
         userRepository = new UserRepository();
     }
 
