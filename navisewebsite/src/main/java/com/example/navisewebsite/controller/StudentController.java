@@ -3,8 +3,6 @@ package com.example.navisewebsite.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
@@ -30,13 +28,15 @@ public class StudentController {
         // Check if user is logged in and is a student
         Object userType = session.getAttribute("userType");
         Object email = session.getAttribute("email");
+        Object firstName = session.getAttribute("firstName");
         
         if (userType == null || !"student".equals(userType)) {
             // Redirect to login if not authenticated as a student
             return "redirect:/";
         }
         
-        // Pass student email to the template
+        // Pass student firstName and email to the template
+        model.addAttribute("firstName", firstName != null ? firstName : "");
         model.addAttribute("studentEmail", email);
         
         return "student-home";
@@ -61,65 +61,8 @@ public class StudentController {
         return "student-info"; // TODO: Create student-info.html template
     }
 
-    /**
-     * Student profile page with editable fields
-     * 
-     * @param session the HttpSession containing student data
-     * @param model the Model to pass data to the template
-     * @return the student profile template or redirect to login if not authenticated
-     */
-    @GetMapping("/student/profile")
-    public String studentProfile(HttpSession session, Model model) {
-        // Check if user is logged in and is a student
-        Object userType = session.getAttribute("userType");
-        Object email = session.getAttribute("email");
-        
-        if (userType == null || !"student".equals(userType)) {
-            return "redirect:/";
-        }
-        
-        model.addAttribute("studentEmail", email);
-        return "student-profile";
-    }
-
-    /**
-     * Handle profile form submission
-     */
-    @PostMapping("/student/profile")
-    public String updateProfile(@RequestParam String firstName,
-                                @RequestParam String lastName,
-                                @RequestParam String schoolYear,
-                                @RequestParam(required = false) String major,
-                                @RequestParam(required = false) String minor,
-                                @RequestParam(required = false) String pastCourses,
-                                HttpSession session,
-                                Model model) {
-        // Check if user is logged in
-        Object userType = session.getAttribute("userType");
-        if (userType == null || !"student".equals(userType)) {
-            return "redirect:/";
-        }
-        
-        Object email = session.getAttribute("email");
-        
-        // Validate input
-        if (firstName == null || firstName.trim().isEmpty()) {
-            model.addAttribute("error", "First name is required.");
-            model.addAttribute("studentEmail", email);
-            return "student-profile";
-        }
-        
-        if (lastName == null || lastName.trim().isEmpty()) {
-            model.addAttribute("error", "Last name is required.");
-            model.addAttribute("studentEmail", email);
-            return "student-profile";
-        }
-        
-        // TODO: Save profile information to database
-        model.addAttribute("message", "Profile updated successfully!");
-        model.addAttribute("studentEmail", email);
-        return "student-profile";
-    }
+    // Note: /student/profile GET and POST methods are now in ProfileController
+    // to avoid duplicate mappings and enable database integration
 
     /**
      * My courses page (displays enrolled courses).

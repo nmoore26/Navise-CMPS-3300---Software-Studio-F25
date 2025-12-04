@@ -31,9 +31,9 @@ public class SQLiteScheduleRepository {
         
         @Override
         public List<ScheduleCourse> coursesForPathway(String pathwayId) {
-            String sql = "SELECT c.id, c.code, c.credits, c.title, c.meeting_time " +
-                    "FROM pathway_courses pc JOIN courses c ON pc.course_id = c.id " +
-                    "WHERE pc.pathway_id = ?";
+            String sql = "SELECT c.courseID as id, c.course_code as code, c.credit_hours as credits, c.course_name as title, c.time as meeting_time " +
+                    "FROM program_courses pc JOIN courses c ON pc.course_id = c.courseID " +
+                    "WHERE pc.program_name = ?";
             
             List<ScheduleCourse> courses = new ArrayList<>();
             try (Connection conn = connect();
@@ -53,7 +53,7 @@ public class SQLiteScheduleRepository {
         
         @Override
         public Optional<ScheduleCourse> courseById(int id) {
-            String sql = "SELECT id, code, credits, title, meeting_time FROM courses WHERE id = ?";
+            String sql = "SELECT courseID as id, course_code as code, credit_hours as credits, course_name as title, time as meeting_time FROM courses WHERE courseID = ?";
             try (Connection conn = connect();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, id);
@@ -71,7 +71,7 @@ public class SQLiteScheduleRepository {
         
         @Override
         public Optional<ScheduleCourse> courseByCode(String code) {
-            String sql = "SELECT id, code, credits, title, meeting_time FROM courses WHERE code = ?";
+            String sql = "SELECT courseID as id, course_code as code, credit_hours as credits, course_name as title, time as meeting_time FROM courses WHERE course_code = ?";
             try (Connection conn = connect();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, code);
@@ -90,9 +90,9 @@ public class SQLiteScheduleRepository {
         private List<ScheduleCourse> tryAlternateCourseQuery(String pathwayId) {
             List<ScheduleCourse> courses = new ArrayList<>();
             String altSql = "SELECT c.id, c.course_code AS code, c.credit_hours AS credits, " +
-                    "c.name AS title, '' AS meeting_time " +
-                    "FROM pathway_courses pc JOIN courses c ON pc.course_id = c.id " +
-                    "WHERE pc.pathway_id = ?";
+                    "c.course_name AS title, c.time AS meeting_time " +
+                    "FROM program_courses pc JOIN courses c ON pc.course_id = c.id " +
+                    "WHERE pc.program_name = ?";
             
             try (Connection conn = connect();
                  PreparedStatement ps = conn.prepareStatement(altSql)) {
@@ -100,7 +100,7 @@ public class SQLiteScheduleRepository {
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         courses.add(buildCourseFromResultSet(rs, 
-                            "id", "code", "credits", "title", null));
+                            "id", "code", "credits", "title", "meeting_time"));
                     }
                 }
             } catch (SQLException ex) {
@@ -137,15 +137,28 @@ public class SQLiteScheduleRepository {
         
         @Override
         public List<Integer> completedCourseIdsForUser(String userId) {
-            String sql = "SELECT course_id FROM user_courses WHERE user_id = ?";
+            // First try to get completed courses from student_info.past_courses field
+            String sql = "SELECT past_courses FROM student_info WHERE user_id = ?";
             List<Integer> courseIds = new ArrayList<>();
             
             try (Connection conn = connect();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, userId);
+                // userId could be email or numeric ID, try numeric first
+                try {
+                    ps.setInt(1, Integer.parseInt(userId));
+                } catch (NumberFormatException e) {
+                    // If not numeric, try as string (though our schema uses INTEGER for user_id)
+                    return courseIds; // Return empty if can't parse
+                }
+                
                 try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        courseIds.add(safeInt(rs, "course_id"));
+                    if (rs.next()) {
+                        String pastCourses = safeString(rs, "past_courses");
+                        if (pastCourses != null && !pastCourses.trim().isEmpty()) {
+                            // Parse comma-separated course codes and look up IDs
+                            String[] courseCodes = pastCourses.split(",\\s*");
+                            courseIds = lookupCourseIdsByCodes(courseCodes);
+                        }
                     }
                 }
             } catch (SQLException e) {
@@ -154,9 +167,37 @@ public class SQLiteScheduleRepository {
             return courseIds;
         }
         
+        /**
+         * Helper method to convert course codes to course IDs
+         */
+        private List<Integer> lookupCourseIdsByCodes(String[] courseCodes) {
+            List<Integer> ids = new ArrayList<>();
+            // Need to connect to courses.db to look up course IDs
+            String courseDbPath = "courses.db";
+            String sql = "SELECT courseID FROM courses WHERE course_code = ?";
+            
+            try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + courseDbPath)) {
+                for (String code : courseCodes) {
+                    if (code.trim().isEmpty()) continue;
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setString(1, code.trim());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                ids.add(rs.getInt("courseID"));
+                            }
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                // Return what we have
+            }
+            return ids;
+        }
+        
         private List<Integer> tryAlternateUserQuery(String userId) {
             List<Integer> courseIds = new ArrayList<>();
-            String alt = "SELECT courseid AS course_id FROM user_courses WHERE userid = ?";
+            // Fallback: try old schema with user_courses table
+            String alt = "SELECT course_id FROM user_courses WHERE user_id = ?";
             
             try (Connection conn = connect();
                  PreparedStatement ps = conn.prepareStatement(alt)) {

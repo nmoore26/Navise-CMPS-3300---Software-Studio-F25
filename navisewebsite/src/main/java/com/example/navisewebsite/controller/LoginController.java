@@ -4,6 +4,8 @@ import com.example.navisewebsite.domain.Account;
 import com.example.navisewebsite.domain.AccountFactory;
 import com.example.navisewebsite.domain.User;
 import com.example.navisewebsite.repository.UserRepository;
+import com.example.navisewebsite.repository.StudentInfoRepository;
+import com.example.navisewebsite.repository.StudentInfoRepository.StudentInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,6 +20,9 @@ public class LoginController {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private StudentInfoRepository studentInfoRepository;
 
     @GetMapping("/index")
     public String showLoginForm() {
@@ -56,6 +61,26 @@ public class LoginController {
                     session.setAttribute("userId", user.getUserId());
                     session.setAttribute("email", email);
                     session.setAttribute("userType", "student");
+                    
+                    // Load student profile info from student_info.db
+                    Optional<StudentInfo> studentInfoOpt = studentInfoRepository.findByUserId(user.getUserId());
+                    if (studentInfoOpt.isPresent()) {
+                        StudentInfo info = studentInfoOpt.get();
+                        session.setAttribute("firstName", info.firstName);
+                        session.setAttribute("lastName", info.lastName);
+                        session.setAttribute("major", info.major);
+                        session.setAttribute("minor", info.minor);
+                        session.setAttribute("schoolYear", info.schoolYear);
+                    } else {
+                        // Create a blank student_info record if one doesn't exist
+                        studentInfoRepository.insertStudentInfo(user.getUserId(), "", "", "", "", "", "");
+                        // Set empty values in session
+                        session.setAttribute("firstName", "");
+                        session.setAttribute("lastName", "");
+                        session.setAttribute("major", "");
+                        session.setAttribute("minor", "");
+                        session.setAttribute("schoolYear", "");
+                    }
                     
                     model.addAttribute("email", email);
                     model.addAttribute("userId", user.getUserId());

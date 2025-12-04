@@ -173,6 +173,85 @@
             margin-top: 5px;
         }
 
+        /* Info Display Styles */
+        .info-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .info-section:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .info-value.empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .edit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .edit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Divider */
+        .divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            margin: 40px 0;
+        }
+
+        /* Update Form Section */
+        .update-section {
+            margin-top: 40px;
+        }
+
+        .update-section h3 {
+            color: #333;
+            font-size: 22px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             header {
@@ -211,8 +290,8 @@
     <!-- Header -->
     <header>
         <div class="header-left">
-            <h1>👤 My Profile</h1>
-            <p>Update your student information</p>
+            <h1>👤 Hi, <span th:text="${firstName != null and firstName != '' ? firstName : 'Student'}">Student</span>!</h1>
+            <p>View and manage your student information</p>
         </div>
         <div class="header-right">
             <a href="/student-home" class="back-btn">← Back to Dashboard</a>
@@ -225,67 +304,105 @@
     <!-- Main Content -->
     <div class="container">
         <div class="profile-card">
-            <h2>Student Profile</h2>
+            <h2>My Profile</h2>
 
             <!-- Success/Error Messages -->
             <div th:if="${message}" class="message success" th:text="${message}"></div>
             <div th:if="${error}" class="message error" th:text="${error}"></div>
 
-            <!-- Profile Form -->
-            <form th:action="@{/student/profile}" method="post">
-                <!-- Name Fields -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="firstName">First Name:</label>
-                        <input type="text" id="firstName" name="firstName" placeholder="Enter first name" required>
+            <!-- Profile Information Display -->
+            <div class="info-section">
+                <div class="info-label">First Name</div>
+                <div class="info-value" th:text="${firstName != null and firstName != '' ? firstName : 'Not provided'}" th:classappend="${firstName == null or firstName == '' ? 'empty' : ''}">John</div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-label">Last Name</div>
+                <div class="info-value" th:text="${lastName != null and lastName != '' ? lastName : 'Not provided'}" th:classappend="${lastName == null or lastName == '' ? 'empty' : ''}">Doe</div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-label">Email</div>
+                <div class="info-value" th:text="${email}">student@tulane.edu</div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-label">School Year</div>
+                <div class="info-value" th:text="${schoolYear != null and schoolYear != '' ? schoolYear : 'Not provided'}" th:classappend="${schoolYear == null or schoolYear == '' ? 'empty' : ''}">Sophomore</div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-label">Major</div>
+                <div class="info-value" th:text="${major != null and major != '' ? major : 'Not declared'}" th:classappend="${major == null or major == '' ? 'empty' : ''}">Computer Science</div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-label">Minor</div>
+                <div class="info-value" th:text="${minor != null and minor != '' ? minor : 'Not declared (optional)'}" th:classappend="${minor == null or minor == '' ? 'empty' : ''}">Mathematics</div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-label">Past Courses (comma-separated)</div>
+                <div class="info-value" th:text="${pastCourses != null and pastCourses != '' ? pastCourses : 'No courses entered yet'}" th:classappend="${pastCourses == null or pastCourses == '' ? 'empty' : ''}">CMPS-101, MATH-201, PHYS-150</div>
+            </div>
+
+            <!-- Divider -->
+            <div class="divider"></div>
+
+            <!-- Update Form Section -->
+            <div class="update-section">
+                <h3>✏️ Update Profile Information</h3>
+
+                <!-- Profile Update Form -->
+                <form th:action="@{/student/profile/update}" method="post">
+                    <!-- Name Fields -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name:</label>
+                            <input type="text" id="firstName" name="firstName" th:value="${firstName}" placeholder="Enter first name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name:</label>
+                            <input type="text" id="lastName" name="lastName" th:value="${lastName}" placeholder="Enter last name" required>
+                        </div>
                     </div>
+
+                    <!-- School Year -->
                     <div class="form-group">
-                        <label for="lastName">Last Name:</label>
-                        <input type="text" id="lastName" name="lastName" placeholder="Enter last name" required>
+                        <label for="schoolYear">School Year:</label>
+                        <select id="schoolYear" name="schoolYear">
+                            <option value="">-- Select Year --</option>
+                            <option value="Freshman" th:selected="${schoolYear == 'Freshman'}">Freshman</option>
+                            <option value="Sophomore" th:selected="${schoolYear == 'Sophomore'}">Sophomore</option>
+                            <option value="Junior" th:selected="${schoolYear == 'Junior'}">Junior</option>
+                            <option value="Senior" th:selected="${schoolYear == 'Senior'}">Senior</option>
+                            <option value="Graduate" th:selected="${schoolYear == 'Graduate'}">Graduate</option>
+                        </select>
                     </div>
-                </div>
 
-                <!-- Email (Read-only) -->
-                <div class="form-group">
-                    <label for="email">Email Address:</label>
-                    <input type="email" id="email" name="email" th:value="${studentEmail}" placeholder="your.email@tulane.edu" readonly>
-                    <p class="info-text">Email cannot be changed</p>
-                </div>
+                    <!-- Major and Minor -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="major">Major:</label>
+                            <input type="text" id="major" name="major" th:value="${major}" placeholder="e.g., Computer Science">
+                        </div>
+                        <div class="form-group">
+                            <label for="minor">Minor (Optional):</label>
+                            <input type="text" id="minor" name="minor" th:value="${minor}" placeholder="e.g., Mathematics">
+                        </div>
+                    </div>
 
-                <!-- School Year -->
-                <div class="form-group">
-                    <label for="schoolYear">School Year:</label>
-                    <select id="schoolYear" name="schoolYear" required>
-                        <option value="">Select your year</option>
-                        <option value="freshman">Freshman</option>
-                        <option value="sophomore">Sophomore</option>
-                        <option value="junior">Junior</option>
-                        <option value="senior">Senior</option>
-                    </select>
-                </div>
-
-                <!-- Major and Minor -->
-                <div class="form-row">
+                    <!-- Past Courses -->
                     <div class="form-group">
-                        <label for="major">Major:</label>
-                        <input type="text" id="major" name="major" placeholder="e.g., Computer Science">
+                        <label for="pastCourses">Past Courses (Comma-separated):</label>
+                        <textarea id="pastCourses" name="pastCourses" th:text="${pastCourses}" placeholder="e.g., CMPS-101, MATH-201, PHYS-150"></textarea>
+                        <p class="info-text">Enter course codes separated by commas</p>
                     </div>
-                    <div class="form-group">
-                        <label for="minor">Minor:</label>
-                        <input type="text" id="minor" name="minor" placeholder="e.g., Mathematics">
-                    </div>
-                </div>
 
-                <!-- Past Courses -->
-                <div class="form-group">
-                    <label for="pastCourses">Past Courses (Comma-separated):</label>
-                    <textarea id="pastCourses" name="pastCourses" placeholder="e.g., CMPS-101, MATH-201, PHYS-150"></textarea>
-                    <p class="info-text">Enter course codes separated by commas</p>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" class="form-btn">Save Profile</button>
-            </form>
+                    <!-- Submit Button -->
+                    <button type="submit" class="form-btn">💾 Save Changes</button>
+                </form>
+            </div>
         </div>
     </div>
 </body>

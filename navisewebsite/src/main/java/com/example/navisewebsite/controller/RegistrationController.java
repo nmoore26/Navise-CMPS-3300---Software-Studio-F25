@@ -42,6 +42,7 @@ public class RegistrationController {
                           @RequestParam String confirmPassword,
                           @RequestParam(required = false) String major,
                           @RequestParam(required = false) String minor,
+                          @RequestParam(required = false) String schoolYear,
                           HttpSession session,
                           Model model) {
 
@@ -90,7 +91,8 @@ public class RegistrationController {
             // Persist student profile info
             String majorVal = (major == null) ? "" : major.trim();
             String minorVal = (minor == null) ? "" : minor.trim();
-            studentInfoRepository.insertStudentInfo(userId, firstName, lastName, majorVal, minorVal, "");
+            String schoolYearVal = (schoolYear == null) ? "" : schoolYear.trim();
+            studentInfoRepository.insertStudentInfo(userId, firstName, lastName, majorVal, minorVal, schoolYearVal, "");
 
             // Store student info in session
             session.setAttribute("userId", userId);
@@ -100,6 +102,7 @@ public class RegistrationController {
             session.setAttribute("lastName", lastName);
             session.setAttribute("major", majorVal);
             session.setAttribute("minor", minorVal);
+            session.setAttribute("schoolYear", schoolYearVal);
             
             model.addAttribute("message", "Registration successful! Welcome to Navise.");
             return "redirect:/student-home";

@@ -196,6 +196,7 @@ public class DatabaseUtil {
                     last_name TEXT,
                     major TEXT,
                     minor TEXT,
+                    school_year TEXT,
                     past_courses TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY(user_id) REFERENCES users(user_id)

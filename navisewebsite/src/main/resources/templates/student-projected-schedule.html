@@ -343,43 +343,54 @@
         </div>
 
         <!-- Schedule Results -->
-        <div th:if="${schedule}" class="schedule-result">
+        <div th:if="${semesters != null and !semesters.isEmpty()}" class="schedule-result">
             <div class="schedule-header">
                 <h2>Your Projected Schedule</h2>
                 <div class="schedule-stats">
-                    <span>📚 <span th:text="${schedule.totalCourses()}"></span> Courses</span>
-                    <span>🎓 <span th:text="${schedule.totalCredits()}"></span> Credits</span>
-                    <span>📆 <span th:text="${schedule.semesterCount()}"></span> Semesters</span>
+                    <span>📚 <span th:text="${totalCourses}"></span> Courses</span>
+                    <span>🎓 <span th:text="${totalCredits}"></span> Credits</span>
+                    <span>📆 <span th:text="${#lists.size(semesters)}"></span> Semesters</span>
                 </div>
             </div>
 
-            <div th:if="${selectedMajor or selectedMinor}" class="info">
+            <div th:if="${selectedMajor != null and !selectedMajor.isEmpty()} or ${selectedMinor != null and !selectedMinor.isEmpty()}" class="info">
                 Showing projected schedule for:
-                <span th:if="${selectedMajor}"><strong>Major:</strong> <span th:text="${selectedMajor}"></span></span>
-                <span th:if="${selectedMajor and selectedMinor}"> | </span>
-                <span th:if="${selectedMinor}"><strong>Minor:</strong> <span th:text="${selectedMinor}"></span></span>
+                <span th:if="${selectedMajor != null and !selectedMajor.isEmpty()}"><strong>Major:</strong> <span th:text="${selectedMajor}"></span></span>
+                <span th:if="${(selectedMajor != null and !selectedMajor.isEmpty()) and (selectedMinor != null and !selectedMinor.isEmpty())}"> | </span>
+                <span th:if="${selectedMinor != null and !selectedMinor.isEmpty()}"><strong>Minor:</strong> <span th:text="${selectedMinor}"></span></span>
             </div>
 
-            <div th:each="semester : ${schedule.semesters}" class="semester-card">
+            <div th:each="semester : ${semesters}" class="semester-card">
                 <div class="semester-header">
-                    <h3 th:text="${semester.semesterLabel}"></h3>
-                    <span class="semester-credits" th:text="${semester.totalCredits() + ' credits'}"></span>
+                    <h3 th:text="${semester.semesterName}"></h3>
+                    <span class="semester-credits" th:text="${semester.totalCredits + ' credits'}"></span>
                 </div>
 
                 <div class="course-grid">
                     <div th:each="course : ${semester.courses}" class="course-item">
-                        <div class="course-code" th:text="${course.code}"></div>
-                        <div class="course-title" th:text="${course.title}"></div>
+                        <div class="course-code" th:text="${course.course_id}"></div>
+                        <div class="course-title" th:text="${course.course_name}"></div>
                         <div class="course-credits">
-                            <strong th:text="${course.credits}"></strong> credits
-                            <span th:if="${course.meetingTime and !course.meetingTime.isEmpty()}" 
-                                  th:text="' • ' + ${course.meetingTime}"></span>
+                            <strong th:text="${course.credit_hours}"></strong> credits
+                            <span th:if="${course.time != null and !#strings.isEmpty(course.time)}" 
+                                  th:text="' • ' + ${course.time}"></span>
+                        </div>
+                        <div class="course-details" style="font-size: 12px; color: #666; margin-top: 8px;">
+                            <div th:if="${course.professor != null and !#strings.isEmpty(course.professor)}">
+                                👤 <span th:text="${course.professor}"></span>
+                            </div>
+                            <div th:if="${course.days != null and !#strings.isEmpty(course.days)}">
+                                📅 <span th:text="${course.days}"></span>
+                            </div>
+                            <div th:if="${course.building != null and course.room != null and !#strings.isEmpty(course.building) and !#strings.isEmpty(course.room)}">
+                                📍 <span th:text="${course.building + ' ' + course.room}"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div th:if="${#lists.isEmpty(schedule.semesters)}" style="text-align: center; padding: 40px; color: #666;">
+            <div th:if="${#lists.isEmpty(semesters)}" style="text-align: center; padding: 40px; color: #666;">
                 <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
                 <p style="font-size: 18px; font-weight: 600;">You've completed all requirements for this program!</p>
             </div>
