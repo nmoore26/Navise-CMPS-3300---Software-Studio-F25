@@ -9,6 +9,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import jakarta.annotation.PostConstruct;
+
 
 import java.sql.*;
 import java.util.*;
@@ -16,9 +19,15 @@ import java.util.*;
 /**
  * Controller for student data pages: My Courses, Degree Progress, Projected Schedule.
  */
+
 @Controller
 public class StudentDataController {
-    
+    public StudentDataController() {
+        System.out.println("DEBUG: StudentDataController created!");
+        System.out.println("Current working directory: " + System.getProperty("user.dir"));
+        System.out.println("Looking for DB at: " + System.getProperty("user.dir") + "/studentinfo.db");
+    }
+
     private static final String DB_PATH = "studentinfo.db";
     private static final String COURSES_DB_PATH = "courses.db";
     
@@ -276,18 +285,29 @@ public class StudentDataController {
         return programs;
     }
     
-    /* private List<String> getCompletedCourses(String email) throws SQLException {
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + DB_PATH)) {
-            String sql = "SELECT past_courses FROM students WHERE email = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, email);
-            ResultSet rs = ps.executeQuery();
-            
-            if (rs.next()) {
-                String pastCoursesStr = rs.getString("past_courses");
-                return parseCourseList(pastCoursesStr);
-            }
+       // DEBUG: Add a simple test endpoint
+    @GetMapping("/test")
+    @ResponseBody
+    public String test() {
+        System.out.println("DEBUG: /test endpoint called!");
+        return "Test endpoint works!";
+    }
+    
+    // DEBUG: Add database test endpoint  
+    @GetMapping("/test-db")
+    @ResponseBody
+    public String testDb() {
+        System.out.println("DEBUG: /test-db endpoint called!");
+        String dbPath = "jdbc:sqlite:studentinfo.db";
+        try (Connection conn = DriverManager.getConnection(dbPath)) {
+            return "Database connection successful!";
+        } catch (SQLException e) {
+            return "Database connection failed: " + e.getMessage();
         }
-        return new ArrayList<>();
-    } */
-}
+    }
+    @PostConstruct
+    public void init() {
+        System.out.println("DEBUG: StudentDataController initialized and ready!");
+    }
+    }
+
