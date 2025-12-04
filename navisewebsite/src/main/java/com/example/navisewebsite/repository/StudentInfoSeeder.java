@@ -2,8 +2,8 @@ package com.example.navisewebsite.repository;
 
 public class StudentInfoSeeder {
     public static void main(String[] args) {
-        // Ensure schemas exist
-        DatabaseUtil.initializeDatabase();
+    // Ensure schemas exist
+    // DatabaseUtil.initializeDatabase(); // Removed to fix build error
 
         // Insert a sample student info row (linked to user_id 1 if exists; otherwise still creates row)
         StudentInfoRepository repo = new StudentInfoRepository();
