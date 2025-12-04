@@ -98,24 +98,28 @@ public class UserRepository {
         String sql = "INSERT INTO users (email, password, first_name, last_name, user_type) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseUtil.connectUsers();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
             pstmt.setString(1, email);
             pstmt.setString(2, hashedPassword);
             pstmt.setString(3, firstName);
             pstmt.setString(4, lastName);
             pstmt.setString(5, userType);
-            
+
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
                 return -1;
             }
-            
+
             // Get the generated user_id
             ResultSet generatedKeys = pstmt.getGeneratedKeys();
             if (generatedKeys.next()) {
                 return generatedKeys.getInt(1);
             }
         } catch (SQLException e) {
+            // Check for unique constraint violation (duplicate email)
+            if (e.getSQLState() != null && (e.getSQLState().equals("23505") || e.getMessage().contains("duplicate key value"))) {
+                // PostgreSQL unique violation SQLSTATE is 23505
+                return -1;
+            }
             e.printStackTrace();
         }
         return -1;
