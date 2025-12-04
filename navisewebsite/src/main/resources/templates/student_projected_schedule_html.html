@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projected Schedule - Navise</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header-left p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .back-btn, .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover, .logout-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-card h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .error, .info {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .schedule-result {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .schedule-header h2 {
+            color: #333;
+            font-size: 26px;
+            margin: 0;
+        }
+
+        .schedule-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .schedule-stats span {
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .semester-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .semester-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .semester-header h3 {
+            color: #555;
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .semester-credits {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .course-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .course-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-code {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .course-title {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .course-credits {
+            color: #666;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                padding: 15px 20px;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .container {
+                margin: 20px auto;
+            }
+
+            .form-card, .schedule-result {
+                padding: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .course-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .schedule-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>📅 Projected Schedule</h1>
+            <p>Plan your hypothetical academic path</p>
+        </div>
+        <div class="header-right">
+            <a href="/student-home" class="back-btn">← Back to Dashboard</a>
+            <form action="/logout" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </header>
+
+    <div class="container">
+        <div th:if="${error}" class="error" th:text="${error}"></div>
+
+        <!-- Form Card -->
+        <div class="form-card">
+            <h2>🔮 Project a Hypothetical Schedule</h2>
+            <p style="color: #666; margin-bottom: 20px; font-size: 14px;">
+                Select a major and/or minor to see a projected schedule of your remaining courses.
+            </p>
+
+            <form th:action="@{/student/projected-schedule}" method="post">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="major">Major (Optional):</label>
+                        <select id="major" name="major">
+                            <option value="">-- Select Major --</option>
+                            <option th:each="majorOption : ${majors}" 
+                                    th:value="${majorOption}" 
+                                    th:text="${majorOption}"
+                                    th:selected="${majorOption == selectedMajor}"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="minor">Minor (Optional):</label>
+                        <select id="minor" name="minor">
+                            <option value="">-- Select Minor --</option>
+                            <option th:each="minorOption : ${minors}" 
+                                    th:value="${minorOption}" 
+                                    th:text="${minorOption}"
+                                    th:selected="${minorOption == selectedMinor}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">Generate Schedule</button>
+            </form>
+        </div>
+
+        <!-- Schedule Results -->
+        <div th:if="${schedule}" class="schedule-result">
+            <div class="schedule-header">
+                <h2>Your Projected Schedule</h2>
+                <div class="schedule-stats">
+                    <span>📚 <span th:text="${schedule.totalCourses()}"></span> Courses</span>
+                    <span>🎓 <span th:text="${schedule.totalCredits()}"></span> Credits</span>
+                    <span>📆 <span th:text="${schedule.semesterCount()}"></span> Semesters</span>
+                </div>
+            </div>
+
+            <div th:if="${selectedMajor or selectedMinor}" class="info">
+                Showing projected schedule for:
+                <span th:if="${selectedMajor}"><strong>Major:</strong> <span th:text="${selectedMajor}"></span></span>
+                <span th:if="${selectedMajor and selectedMinor}"> | </span>
+                <span th:if="${selectedMinor}"><strong>Minor:</strong> <span th:text="${selectedMinor}"></span></span>
+            </div>
+
+            <div th:each="semester : ${schedule.semesters}" class="semester-card">
+                <div class="semester-header">
+                    <h3 th:text="${semester.semesterLabel}"></h3>
+                    <span class="semester-credits" th:text="${semester.totalCredits() + ' credits'}"></span>
+                </div>
+
+                <div class="course-grid">
+                    <div th:each="course : ${semester.courses}" class="course-item">
+                        <div class="course-code" th:text="${course.code}"></div>
+                        <div class="course-title" th:text="${course.title}"></div>
+                        <div class="course-credits">
+                            <strong th:text="${course.credits}"></strong> credits
+                            <span th:if="${course.meetingTime and !course.meetingTime.isEmpty()}" 
+                                  th:text="' • ' + ${course.meetingTime}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(schedule.semesters)}" style="text-align: center; padding: 40px; color: #666;">
+                <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
+                <p style="font-size: 18px; font-weight: 600;">You've completed all requirements for this program!</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
