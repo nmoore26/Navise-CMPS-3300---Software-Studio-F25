@@ -6,8 +6,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import jakarta.annotation.PostConstruct;
+// import org.springframework.web.bind.annotation.ResponseBody;
+// import jakarta.annotation.PostConstruct;
 
 
 import java.sql.*;
@@ -317,7 +317,7 @@ public class StudentDataController {
         return programs;
     }
     
-    private List<String> getStudentCompletedCourses(Integer userId) throws SQLException {
+/*      private List<String> getStudentCompletedCourses(Integer userId) throws SQLException {
         List<String> completedCourses = new ArrayList<>();
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + DB_PATH)) {
             String sql = "SELECT past_courses FROM student_info WHERE user_id = ?";
@@ -331,7 +331,7 @@ public class StudentDataController {
             }
         }
         return completedCourses;
-    }
+    } */
     
     private List<Map<String, Object>> getAllCoursesForProgram(String programName) throws SQLException {
         List<Map<String, Object>> courses = new ArrayList<>();
@@ -371,7 +371,7 @@ public class StudentDataController {
         return courses;
     }
     
-    private List<Map<String, Object>> getCoursesForProgram(String programName, List<String> completedCourses) throws SQLException {
+/*     private List<Map<String, Object>> getCoursesForProgram(String programName, List<String> completedCourses) throws SQLException {
         List<Map<String, Object>> courses = new ArrayList<>();
         
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + COURSES_DB_PATH)) {
@@ -416,7 +416,7 @@ public class StudentDataController {
         }
         
         return courses;
-    }
+    } */
     
     private List<Map<String, Object>> organizeCoursesBySemester(List<Map<String, Object>> courses, int maxCreditsPerSemester) {
         List<Map<String, Object>> semesters = new ArrayList<>();
