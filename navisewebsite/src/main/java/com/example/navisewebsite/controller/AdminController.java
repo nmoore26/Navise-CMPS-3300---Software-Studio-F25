@@ -2,7 +2,9 @@ package com.example.navisewebsite.controller;
 
 import com.example.navisewebsite.domain.Course;
 import com.example.navisewebsite.repository.ProgramRepository;
+import com.example.navisewebsite.repository.StudentInfoRepository;
 import com.example.navisewebsite.service.AdminCourseService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +12,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpSession;
+
+import java.util.List;
 
 /**
  * Controller for handling admin actions like adding courses
@@ -20,6 +24,9 @@ import jakarta.servlet.http.HttpSession;
 public class AdminController {
 
     private final AdminCourseService courseService;
+    
+    @Autowired
+    private StudentInfoRepository studentInfoRepository;
 
     public AdminController(AdminCourseService courseService) {
         this.courseService = courseService;
@@ -53,6 +60,10 @@ public class AdminController {
         // Pass admin email to the template
         model.addAttribute("email", email);
         
+        // Load all students from student_info table
+        List<StudentInfoRepository.StudentInfo> students = studentInfoRepository.findAllStudents();
+        model.addAttribute("students", students);
+        
         return "admin-home";
     }
 
@@ -62,8 +73,9 @@ public class AdminController {
      * @param course       The course to add
      * @param programName  Name of the program (sheetName)
      * @param programType  Either "Major" or "Minor"
+     * @param session      HttpSession to retrieve user context
      * @param model        Spring Model for passing data to the view
-     * @return admin.html page
+     * @return redirect to admin-home page
      */
     @PostMapping("/admin/add-course")
     public String addCourse(
@@ -74,12 +86,13 @@ public class AdminController {
             @RequestParam(required = false) String termsCSV,
             @RequestParam String programName,
             @RequestParam String programType,
+            HttpSession session,
             Model model) {
 
         // Validate program type
         if (!programType.equalsIgnoreCase("Major") && !programType.equalsIgnoreCase("Minor")) {
             model.addAttribute("error", "Program type must be either 'Major' or 'Minor'");
-            return "admin";
+            return adminHome(session, model);
         }
 
         // Convert CSV strings to lists
@@ -92,35 +105,33 @@ public class AdminController {
         courseService.add_course(course, programName, programType);
 
         model.addAttribute("message", "Course added successfully!");
-        model.addAttribute("course", new Course()); // reset form
 
-        return "admin";
+        return adminHome(session, model);
     }
 
     @PostMapping("/admin/remove-course")
-    public String removeCourse(@ModelAttribute("course") Course course, Model model) {
+    public String removeCourse(@ModelAttribute("course") Course course, HttpSession session, Model model) {
         if (course.get_courseID() == null || course.get_courseID().isEmpty()) {
             model.addAttribute("error", "Course ID is required to remove a course.");
-            return "admin";
+            return adminHome(session, model);
         }
 
         courseService.remove_course(course);
 
         model.addAttribute("message", "Course removed successfully!");
-        model.addAttribute("course", new Course());
 
-        return "admin";
+        return adminHome(session, model);
     }
     // Add a program (Major/Minor)
     @PostMapping("/admin/add-program")
     public String addProgram(@RequestParam String programName,
                              @RequestParam String programType,
+                             HttpSession session,
                              Model model) {
 
         if (!programType.equalsIgnoreCase("Major") && !programType.equalsIgnoreCase("Minor")) {
             model.addAttribute("error", "Program type must be 'Major' or 'Minor'");
-            model.addAttribute("course", new Course());
-            return "admin";
+            return adminHome(session, model);
         }
 
         ProgramRepository programRepo = new ProgramRepository();
@@ -131,29 +142,25 @@ public class AdminController {
         } else {
             model.addAttribute("error", "Failed to add program. It may already exist.");
         }
-        
-        // Add course object to model so Thymeleaf template can render without error
-        model.addAttribute("course", new Course());
 
-        return "admin";
+        return adminHome(session, model);
     }
 
     @PostMapping("/admin/remove-program")
     public String removeProgram(@RequestParam String programName,
+                                HttpSession session,
                                 Model model) {
         if (programName == null || programName.isEmpty()) {
             model.addAttribute("error", "Program name is required to remove a program.");
-            model.addAttribute("course", new Course());
-            return "admin";
+            return adminHome(session, model);
         }
 
         ProgramRepository programRepo = new ProgramRepository();
         programRepo.removeProgram(programName);
 
         model.addAttribute("message", "Program removed successfully!");
-        model.addAttribute("course", new Course());
 
-        return "admin";
+        return adminHome(session, model);
     }
 }
 

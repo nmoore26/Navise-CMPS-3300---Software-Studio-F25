@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Navise</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header-left p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .back-btn, .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover, .logout-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        /* Container */
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .profile-card h2 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .form-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Messages */
+        .message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-text {
+            color: #666;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                padding: 15px 20px;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .container {
+                margin: 20px auto;
+            }
+
+            .profile-card {
+                padding: 30px 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-card h2 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-left">
+            <h1>✏️ Edit Profile</h1>
+            <p>Update your student information</p>
+        </div>
+        <div class="header-right">
+            <a href="/student/profile" class="back-btn">← Cancel</a>
+            <form action="/logout" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="profile-card">
+            <h2>Edit Student Profile</h2>
+
+            <!-- Success/Error Messages -->
+            <div th:if="${message}" class="message success" th:text="${message}"></div>
+            <div th:if="${error}" class="message error" th:text="${error}"></div>
+
+            <!-- Profile Form -->
+            <form th:action="@{/student/profile/update}" method="post">
+                <!-- Name Fields -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name:</label>
+                        <input type="text" id="firstName" name="firstName" th:value="${firstName}" placeholder="Enter first name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name:</label>
+                        <input type="text" id="lastName" name="lastName" th:value="${lastName}" placeholder="Enter last name" required>
+                    </div>
+                </div>
+
+                <!-- Email (Read-only) -->
+                <div class="form-group">
+                    <label for="email">Email Address:</label>
+                    <input type="email" id="email" name="email" th:value="${email}" placeholder="your.email@tulane.edu" readonly>
+                    <p class="info-text">Email cannot be changed</p>
+                </div>
+
+                <!-- School Year -->
+                <div class="form-group">
+                    <label for="schoolYear">School Year:</label>
+                    <select id="schoolYear" name="schoolYear">
+                        <option value="">-- Select Year --</option>
+                        <option value="Freshman" th:selected="${schoolYear == 'Freshman'}">Freshman</option>
+                        <option value="Sophomore" th:selected="${schoolYear == 'Sophomore'}">Sophomore</option>
+                        <option value="Junior" th:selected="${schoolYear == 'Junior'}">Junior</option>
+                        <option value="Senior" th:selected="${schoolYear == 'Senior'}">Senior</option>
+                        <option value="Graduate" th:selected="${schoolYear == 'Graduate'}">Graduate</option>
+                    </select>
+                </div>
+
+                <!-- Major and Minor -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="major">Major:</label>
+                        <input type="text" id="major" name="major" th:value="${major}" placeholder="e.g., Computer Science">
+                    </div>
+                    <div class="form-group">
+                        <label for="minor">Minor (Optional):</label>
+                        <input type="text" id="minor" name="minor" th:value="${minor}" placeholder="e.g., Mathematics">
+                    </div>
+                </div>
+
+                <!-- Past Courses -->
+                <div class="form-group">
+                    <label for="pastCourses">Past Courses (Comma-separated):</label>
+                    <textarea id="pastCourses" name="pastCourses" th:text="${pastCourses}" placeholder="e.g., CMPS-101, MATH-201, PHYS-150"></textarea>
+                    <p class="info-text">Enter course codes separated by commas</p>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="form-btn">💾 Save Changes</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -232,6 +232,19 @@
     <div class="container">
         <div th:if="${error}" class="error" th:text="${error}"></div>
 
+        <!-- Past Course History Section -->
+        <div th:if="${pastCourses}" class="program-section" style="margin-bottom: 30px;">
+            <div class="program-header">
+                <span class="program-icon">📚</span>
+                <h2>Your Course History</h2>
+            </div>
+            <div style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <p style="color: #555; font-size: 16px; line-height: 1.8; margin: 0;">
+                    <strong>Completed Courses:</strong> <span th:text="${pastCourses}"></span>
+                </p>
+            </div>
+        </div>
+
         <!-- Major Section -->
         <div th:if="${major}" class="program-section">
             <div class="program-header">
@@ -244,7 +257,7 @@
                 <div class="course-category">
                     <div class="category-header">
                         <span class="category-icon">✅</span>
-                        <h3>Course History</h3>
+                        <h3>Completed Major Requirements</h3>
                     </div>
                     <div class="course-list">
                         <div th:each="course : ${majorCompleted}" class="course-card">
@@ -258,7 +271,7 @@
                             </div>
                         </div>
                         <div th:if="${#lists.isEmpty(majorCompleted)}" style="color: #999; font-style: italic; padding: 10px;">
-                            No courses completed yet
+                            No major requirements completed yet
                         </div>
                     </div>
                 </div>
@@ -267,7 +280,7 @@
                 <div class="course-category">
                     <div class="category-header">
                         <span class="category-icon">📋</span>
-                        <h3>Courses Remaining</h3>
+                        <h3>Major Requirements Remaining</h3>
                     </div>
                     <div class="course-list">
                         <div th:each="course : ${majorRemaining}" class="course-card">
@@ -300,7 +313,7 @@
                 <div class="course-category">
                     <div class="category-header">
                         <span class="category-icon">✅</span>
-                        <h3>Course History</h3>
+                        <h3>Completed Minor Requirements</h3>
                     </div>
                     <div class="course-list">
                         <div th:each="course : ${minorCompleted}" class="course-card">
@@ -314,7 +327,7 @@
                             </div>
                         </div>
                         <div th:if="${#lists.isEmpty(minorCompleted)}" style="color: #999; font-style: italic; padding: 10px;">
-                            No courses completed yet
+                            No minor requirements completed yet
                         </div>
                     </div>
                 </div>
@@ -323,7 +336,7 @@
                 <div class="course-category">
                     <div class="category-header">
                         <span class="category-icon">📋</span>
-                        <h3>Courses Remaining</h3>
+                        <h3>Minor Requirements Remaining</h3>
                     </div>
                     <div class="course-list">
                         <div th:each="course : ${minorRemaining}" class="course-card">
@@ -345,7 +358,7 @@
         </div>
 
         <!-- No Programs Message -->
-        <div th:if="${!major and !minor}" class="program-section">
+        <div th:if="${major == null and minor == null}" class="program-section">
             <div class="no-program">
                 <div class="no-program-icon">📚</div>
                 <p>No major or minor information available.</p>

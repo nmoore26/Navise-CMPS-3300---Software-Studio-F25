@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
@@ -24,6 +25,8 @@ public class AdminControllerIntegrationTest {
 
     @Autowired
     private CourseRepository courseRepository;
+
+    private MockHttpSession adminSession;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -65,12 +68,32 @@ public class AdminControllerIntegrationTest {
                     FOREIGN KEY (course_id) REFERENCES courses(course_id)
                 );
             """);
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS student_info (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    first_name TEXT,
+                    last_name TEXT,
+                    major TEXT,
+                    minor TEXT,
+                    school_year TEXT,
+                    past_courses TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """);
         }
+        
+        // Create a mock admin session
+        adminSession = new MockHttpSession();
+        adminSession.setAttribute("userType", "admin");
+        adminSession.setAttribute("email", "admin@test.com");
+        adminSession.setAttribute("userId", 1);
     }
 
     @Test
     public void testAddCourseFormSubmitsAndPersists() throws Exception {
         mockMvc.perform(post("/admin/add-course")
+                .session(adminSession)
                 .param("courseID", "TEST101")
                 .param("courseName", "Test Course")
                 .param("courseCode", "TST101")
@@ -87,7 +110,7 @@ public class AdminControllerIntegrationTest {
                 .param("programName", "Test Program")
                 .param("programType", "Major"))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.view().name("admin"));
+                .andExpect(MockMvcResultMatchers.view().name("admin-home"));
 
         // Verify the course was added
         Course found = courseRepository.findById("TEST101").orElse(null);
@@ -99,24 +122,27 @@ public class AdminControllerIntegrationTest {
     @Test
     public void testAddProgramFormSubmitsAndPersists() throws Exception {
         mockMvc.perform(post("/admin/add-program")
+                .session(adminSession)
                 .param("programName", "Computer Science")
                 .param("programType", "Major"))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.view().name("admin"));
+                .andExpect(MockMvcResultMatchers.view().name("admin-home"));
     }
 
     @Test
     public void testRemoveProgramFormSubmitsAndRemoves() throws Exception {
         // First, add a program
         mockMvc.perform(post("/admin/add-program")
+                .session(adminSession)
                 .param("programName", "Test Program")
                 .param("programType", "Major"))
                 .andExpect(status().isOk());
 
         // Then, remove the program
         mockMvc.perform(post("/admin/remove-program")
+                .session(adminSession)
                 .param("programName", "Test Program"))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.view().name("admin"));
+                .andExpect(MockMvcResultMatchers.view().name("admin-home"));
     }
 }
