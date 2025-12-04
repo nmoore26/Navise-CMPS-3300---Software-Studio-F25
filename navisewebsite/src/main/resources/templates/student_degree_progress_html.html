@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Degree Progress - Navise</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header-left p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .back-btn, .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover, .logout-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .program-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .program-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .program-header h2 {
+            color: #333;
+            font-size: 26px;
+            margin: 0;
+        }
+
+        .program-icon {
+            font-size: 36px;
+        }
+
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .course-category {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .category-header h3 {
+            color: #555;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .category-icon {
+            font-size: 24px;
+        }
+
+        .course-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .course-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-code {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .course-name {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .course-details {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .course-details div {
+            margin-bottom: 3px;
+        }
+
+        .no-program {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+            font-size: 18px;
+        }
+
+        .no-program-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                padding: 15px 20px;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .container {
+                margin: 20px auto;
+            }
+
+            .program-section {
+                padding: 20px;
+            }
+
+            .courses-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>🎯 Degree Progress</h1>
+            <p>Track your completed and remaining courses</p>
+        </div>
+        <div class="header-right">
+            <a href="/student-home" class="back-btn">← Back to Dashboard</a>
+            <form action="/logout" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </header>
+
+    <div class="container">
+        <div th:if="${error}" class="error" th:text="${error}"></div>
+
+        <!-- Major Section -->
+        <div th:if="${major}" class="program-section">
+            <div class="program-header">
+                <span class="program-icon">🎓</span>
+                <h2>Major: <span th:text="${major}"></span></h2>
+            </div>
+
+            <div class="courses-grid">
+                <!-- Completed Courses -->
+                <div class="course-category">
+                    <div class="category-header">
+                        <span class="category-icon">✅</span>
+                        <h3>Course History</h3>
+                    </div>
+                    <div class="course-list">
+                        <div th:each="course : ${majorCompleted}" class="course-card">
+                            <div class="course-code" th:text="${course.code}"></div>
+                            <div class="course-name" th:text="${course.name}"></div>
+                            <div class="course-details">
+                                <div><strong>Credits:</strong> <span th:text="${course.credits}"></span></div>
+                                <div><strong>Professor:</strong> <span th:text="${course.professor}"></span></div>
+                                <div><strong>Schedule:</strong> <span th:text="${course.days}"></span> at <span th:text="${course.time}"></span></div>
+                                <div><strong>Location:</strong> <span th:text="${course.building}"></span> - <span th:text="${course.room}"></span></div>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(majorCompleted)}" style="color: #999; font-style: italic; padding: 10px;">
+                            No courses completed yet
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remaining Courses -->
+                <div class="course-category">
+                    <div class="category-header">
+                        <span class="category-icon">📋</span>
+                        <h3>Courses Remaining</h3>
+                    </div>
+                    <div class="course-list">
+                        <div th:each="course : ${majorRemaining}" class="course-card">
+                            <div class="course-code" th:text="${course.code}"></div>
+                            <div class="course-name" th:text="${course.name}"></div>
+                            <div class="course-details">
+                                <div><strong>Credits:</strong> <span th:text="${course.credits}"></span></div>
+                                <div><strong>Professor:</strong> <span th:text="${course.professor}"></span></div>
+                                <div><strong>Schedule:</strong> <span th:text="${course.days}"></span> at <span th:text="${course.time}"></span></div>
+                                <div><strong>Location:</strong> <span th:text="${course.building}"></span> - <span th:text="${course.room}"></span></div>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(majorRemaining)}" style="color: #28a745; font-weight: 600; padding: 10px;">
+                            🎉 All major requirements completed!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Minor Section -->
+        <div th:if="${minor}" class="program-section">
+            <div class="program-header">
+                <span class="program-icon">📖</span>
+                <h2>Minor: <span th:text="${minor}"></span></h2>
+            </div>
+
+            <div class="courses-grid">
+                <!-- Completed Courses -->
+                <div class="course-category">
+                    <div class="category-header">
+                        <span class="category-icon">✅</span>
+                        <h3>Course History</h3>
+                    </div>
+                    <div class="course-list">
+                        <div th:each="course : ${minorCompleted}" class="course-card">
+                            <div class="course-code" th:text="${course.code}"></div>
+                            <div class="course-name" th:text="${course.name}"></div>
+                            <div class="course-details">
+                                <div><strong>Credits:</strong> <span th:text="${course.credits}"></span></div>
+                                <div><strong>Professor:</strong> <span th:text="${course.professor}"></span></div>
+                                <div><strong>Schedule:</strong> <span th:text="${course.days}"></span> at <span th:text="${course.time}"></span></div>
+                                <div><strong>Location:</strong> <span th:text="${course.building}"></span> - <span th:text="${course.room}"></span></div>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(minorCompleted)}" style="color: #999; font-style: italic; padding: 10px;">
+                            No courses completed yet
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remaining Courses -->
+                <div class="course-category">
+                    <div class="category-header">
+                        <span class="category-icon">📋</span>
+                        <h3>Courses Remaining</h3>
+                    </div>
+                    <div class="course-list">
+                        <div th:each="course : ${minorRemaining}" class="course-card">
+                            <div class="course-code" th:text="${course.code}"></div>
+                            <div class="course-name" th:text="${course.name}"></div>
+                            <div class="course-details">
+                                <div><strong>Credits:</strong> <span th:text="${course.credits}"></span></div>
+                                <div><strong>Professor:</strong> <span th:text="${course.professor}"></span></div>
+                                <div><strong>Schedule:</strong> <span th:text="${course.days}"></span> at <span th:text="${course.time}"></span></div>
+                                <div><strong>Location:</strong> <span th:text="${course.building}"></span> - <span th:text="${course.room}"></span></div>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(minorRemaining)}" style="color: #28a745; font-weight: 600; padding: 10px;">
+                            🎉 All minor requirements completed!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- No Programs Message -->
+        <div th:if="${!major and !minor}" class="program-section">
+            <div class="no-program">
+                <div class="no-program-icon">📚</div>
+                <p>No major or minor information available.</p>
+                <p style="font-size: 14px; margin-top: 10px;">Please update your profile with your academic programs.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

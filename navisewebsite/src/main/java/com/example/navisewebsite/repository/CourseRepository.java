@@ -9,13 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
-/*
-The purpose of the CourseRepository class is to provide methods for performing CRUD operations
-on the 'courses' table in the SQLite database. It allows adding new courses, retrieving courses
-by ID, and fetching all courses.
- */
+
 @Repository
-public class CourseRepository {
+public class CourseRepository implements CourseRepositoryInterface {
 
     public void addCourse(Course course) {
         String sql = """
