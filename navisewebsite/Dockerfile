@@ -1,22 +1,23 @@
-# Build stage# Build stage
+# Build stage
+FROM maven:3.9-eclipse-temurin-21 as builder
 
-FROM maven:3.9-eclipse-temurin-21 as builderFROM maven:3.9-eclipse-temurin-21 as builder
+WORKDIR /app
 
-
-
-WORKDIR /appWORKDIR /app
-
-
-
-COPY pom.xml .COPY . .
-
+COPY pom.xml .
 COPY src src
 
 RUN mvn clean package -DskipTests
 
-RUN mvn clean package -DskipTests
-
 # Runtime stage
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/target/navisewebsite-0.0.1-SNAPSHOT.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-Dserver.port=8080", "-jar", "app.jar"]
 
 # Runtime stageFROM openjdk:21-slim
 
