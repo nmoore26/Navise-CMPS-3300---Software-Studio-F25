@@ -14,10 +14,9 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 COPY --from=builder /app/target/navisewebsite-0.0.1-SNAPSHOT.jar app.jar
-COPY start.sh start.sh
-
-RUN chmod +x start.sh
 
 EXPOSE 8080
+
+CMD ["java", "-Dserver.port=8080", "-jar", "app.jar"]EXPOSE 8080
 
 CMD ["bash", "start.sh"]
