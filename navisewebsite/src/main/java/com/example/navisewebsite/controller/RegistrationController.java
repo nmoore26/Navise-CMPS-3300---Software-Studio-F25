@@ -45,6 +45,7 @@ public class RegistrationController {
                           @RequestParam(required = false) String schoolYear,
                           HttpSession session,
                           Model model) {
+        String sqlError = null;
 
         // Validate input
         if (firstName == null || firstName.trim().isEmpty()) {
@@ -83,9 +84,15 @@ public class RegistrationController {
             return "register";
         }
 
-    // Register the new student
-    // TODO: Hash the password with BCrypt before storing
-    int userId = userRepository.addStudent(email, password, firstName, lastName);
+        // Register the new student
+        // TODO: Hash the password with BCrypt before storing
+        int userId = -1;
+        try {
+            userId = userRepository.addStudent(email, password, firstName, lastName);
+        } catch (Exception ex) {
+            sqlError = ex.getMessage();
+            ex.printStackTrace();
+        }
 
         if (userId > 0) {
             // Persist student profile info
@@ -103,11 +110,15 @@ public class RegistrationController {
             session.setAttribute("major", majorVal);
             session.setAttribute("minor", minorVal);
             session.setAttribute("schoolYear", schoolYearVal);
-            
+
             model.addAttribute("message", "Registration successful! Welcome to Navise.");
             return "redirect:/student-home";
         } else {
-            model.addAttribute("error", "Registration failed. Please try again.");
+            String errorMsg = "Registration failed. Please try again.";
+            if (sqlError != null) {
+                errorMsg += " SQL Error: " + sqlError;
+            }
+            model.addAttribute("error", errorMsg);
             return "register";
         }
     }
