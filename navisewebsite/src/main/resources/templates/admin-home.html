@@ -365,10 +365,6 @@
                 <div class="sidebar-icon">👥</div>
                 <span>Users</span>
             </a>
-            <a onclick="switchSection('reports')" class="sidebar-icon-btn" title="Reports & Analytics">
-                <div class="sidebar-icon">📊</div>
-                <span>Reports</span>
-            </a>
         </aside>
 
         <!-- Main Content Area -->
@@ -564,62 +560,67 @@
                 <div class="quick-actions">
                     <button onclick="showForm('viewUsersInfo')" class="action-card">
                         <div class="action-card-icon">👀</div>
-                        <span>View Users</span>
+                        <span>View All Students</span>
                     </button>
                 </div>
 
-                <div id="viewUsersInfo" style="display: none;">
-                    <p style="color: #666; line-height: 1.8;">
-                        <strong>📋 User Management Features:</strong><br>
-                        • View all registered students and admins<br>
-                        • Delete user accounts<br>
-                        • Reset user passwords<br>
-                        • Manage user roles and permissions<br>
-                        <br>
-                        <em>User management features will be available soon!</em>
-                    </p>
+                <div id="viewUsersInfo" style="display: block;">
+                    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; flex-grow: 1;">
+                                📋 Registered Students
+                            </h3>
+                            <button onclick="window.location.reload();" 
+                                    style="background-color: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600; margin-left: 20px; display: flex; align-items: center; gap: 8px;"
+                                    onmouseover="this.style.backgroundColor='#5568d3'" 
+                                    onmouseout="this.style.backgroundColor='#667eea'">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        
+                        <div th:if="${students == null or students.isEmpty()}" style="padding: 20px; text-align: center; color: #666;">
+                            <p>No students registered yet.</p>
+                        </div>
+                        
+                        <div th:if="${students != null and !students.isEmpty()}">
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                                <thead>
+                                    <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #495057;">First Name</th>
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #495057;">Last Name</th>
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #495057;">Major</th>
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #495057;">Minor</th>
+                                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #495057;">School Year</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="student : ${students}" style="border-bottom: 1px solid #dee2e6;">
+                                        <td style="padding: 12px; color: #212529;" th:text="${student.firstName}">John</td>
+                                        <td style="padding: 12px; color: #212529;" th:text="${student.lastName}">Doe</td>
+                                        <td style="padding: 12px; color: #6c757d;">
+                                            <span th:if="${student.major != null and student.major != ''}" th:text="${student.major}">Computer Science</span>
+                                            <span th:if="${student.major == null or student.major == ''}" style="font-style: italic; color: #adb5bd;">Not set</span>
+                                        </td>
+                                        <td style="padding: 12px; color: #6c757d;">
+                                            <span th:if="${student.minor != null and student.minor != ''}" th:text="${student.minor}">Mathematics</span>
+                                            <span th:if="${student.minor == null or student.minor == ''}" style="font-style: italic; color: #adb5bd;">Not set</span>
+                                        </td>
+                                        <td style="padding: 12px; color: #6c757d;">
+                                            <span th:if="${student.schoolYear != null and student.schoolYear != ''}" th:text="${student.schoolYear}">Sophomore</span>
+                                            <span th:if="${student.schoolYear == null or student.schoolYear == ''}" style="font-style: italic; color: #adb5bd;">Not set</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <p style="margin-top: 15px; color: #6c757d; font-size: 14px;">
+                                <strong>Total Students:</strong> <span th:text="${students.size()}">0</span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ========== REPORTS SECTION ========== -->
-            <div id="reports" class="section">
-                <div class="section-title">
-                    <span>📊</span> Reports & Analytics
-                </div>
-
-                <div class="quick-actions">
-                    <button onclick="showForm('courseStats')" class="action-card">
-                        <div class="action-card-icon">📈</div>
-                        <span>Course Stats</span>
-                    </button>
-                    <button onclick="showForm('userStats')" class="action-card">
-                        <div class="action-card-icon">👤</div>
-                        <span>User Stats</span>
-                    </button>
-                </div>
-
-                <div id="courseStats" style="display: none;">
-                    <p style="color: #666; line-height: 1.8;">
-                        <strong>📚 Course Statistics:</strong><br>
-                        • Total number of courses<br>
-                        • Courses per program<br>
-                        • Course enrollment data<br>
-                        <br>
-                        <em>Detailed analytics will be available soon!</em>
-                    </p>
-                </div>
-
-                <div id="userStats" style="display: none;">
-                    <p style="color: #666; line-height: 1.8;">
-                        <strong>👥 User Statistics:</strong><br>
-                        • Total registered students<br>
-                        • Student progress overview<br>
-                        • Admin accounts<br>
-                        <br>
-                        <em>Detailed analytics will be available soon!</em>
-                    </p>
-                </div>
-            </div>
         </div>
     </div>
 
