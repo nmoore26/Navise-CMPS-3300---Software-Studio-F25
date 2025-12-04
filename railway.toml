@@ -1,2 +1,5 @@
 [projectDir]
 projectPath = "navisewebsite"
+
+[deploy]
+startCommand = "bash start.sh"
