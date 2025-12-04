@@ -3,9 +3,10 @@ FROM maven:3.9-eclipse-temurin-21 as builder
 
 WORKDIR /app
 
+
 COPY navisewebsite/ ./
 
-RUN mvn clean package -DskipTests
+RUN mvn clean package
 
 # Runtime stage
 FROM eclipse-temurin:21-jre
