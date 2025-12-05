@@ -1,3 +1,12 @@
+# Runtime stage
+FROM eclipse-temurin:21-jre
+
+# INSTALL SQLITE3 ✅
+RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# ... rest of your Dockerfile ...
 # Build stage
 FROM maven:3.9-eclipse-temurin-21 as builder
 
