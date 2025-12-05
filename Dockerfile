@@ -24,17 +24,23 @@ COPY navisewebsite/student_info.db /tmp/student_info.db
 RUN echo '#!/bin/sh' > /app/init.sh && \
     echo 'mkdir -p /data' >> /app/init.sh && \
     echo '' >> /app/init.sh && \
-    echo '# Initialize all databases only on first run' >> /app/init.sh && \
+    echo '# Initialize databases if they do not exist' >> /app/init.sh && \
     echo 'if [ ! -f /data/users.db ]; then' >> /app/init.sh && \
-    echo '  echo "First run - initializing all databases..."' >> /app/init.sh && \
+    echo '  echo "Initializing users.db..."' >> /app/init.sh && \
     echo '  cp /tmp/users.db /data/users.db' >> /app/init.sh && \
-    echo '  cp /tmp/courses.db /data/courses.db' >> /app/init.sh && \
-    echo '  cp /tmp/student_info.db /data/student_info.db' >> /app/init.sh && \
-    echo '  echo "All databases initialized!"' >> /app/init.sh && \
-    echo 'else' >> /app/init.sh && \
-    echo '  echo "Using existing databases from persistent disk"' >> /app/init.sh && \
     echo 'fi' >> /app/init.sh && \
     echo '' >> /app/init.sh && \
+    echo 'if [ ! -f /data/courses.db ]; then' >> /app/init.sh && \
+    echo '  echo "Initializing courses.db..."' >> /app/init.sh && \
+    echo '  cp /tmp/courses.db /data/courses.db' >> /app/init.sh && \
+    echo 'fi' >> /app/init.sh && \
+    echo '' >> /app/init.sh && \
+    echo 'if [ ! -f /data/student_info.db ]; then' >> /app/init.sh && \
+    echo '  echo "Initializing student_info.db..."' >> /app/init.sh && \
+    echo '  cp /tmp/student_info.db /data/student_info.db' >> /app/init.sh && \
+    echo 'fi' >> /app/init.sh && \
+    echo '' >> /app/init.sh && \
+    echo 'echo "All databases ready!"' >> /app/init.sh && \
     echo 'echo "Starting application..."' >> /app/init.sh && \
     echo 'exec java -Dserver.port=${PORT:-8080} -jar app.jar' >> /app/init.sh && \
     chmod +x /app/init.sh
