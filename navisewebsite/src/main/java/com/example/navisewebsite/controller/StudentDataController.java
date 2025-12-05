@@ -262,8 +262,16 @@ public class StudentDataController {
         Map<String, Object> result = new HashMap<>();
         List<Map<String, String>> completed = new ArrayList<>();
         List<Map<String, String>> remaining = new ArrayList<>();
-        
-    try (Connection conn = DatabaseUtil.connectCourses()) {
+
+        // Defensive: normalize completedCourses (trim, ignore case)
+        Set<String> completedSet = new HashSet<>();
+        if (completedCourses != null) {
+            for (String c : completedCourses) {
+                if (c != null) completedSet.add(c.trim().toUpperCase());
+            }
+        }
+
+        try (Connection conn = DatabaseUtil.connectCourses()) {
             // Get requirements for the program by joining programs -> program_courses -> courses
             String sql = "SELECT c.* FROM courses c " +
                     "JOIN program_courses pc ON c.course_id = pc.course_id " +
@@ -272,13 +280,12 @@ public class StudentDataController {
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, program);
             ResultSet rs = ps.executeQuery();
-            
-            int courseCount = 0;
+
+            List<String> requiredCourseIds = new ArrayList<>();
             while (rs.next()) {
-                courseCount++;
                 Map<String, String> courseData = new HashMap<>();
-                // course_id is the actual course code like "MATH 1210"
                 String courseId = rs.getString("course_id");
+                requiredCourseIds.add(courseId);
                 courseData.put("code", courseId != null ? courseId : "N/A");
                 courseData.put("name", rs.getString("course_name") != null ? rs.getString("course_name") : "N/A");
                 courseData.put("credits", String.valueOf(rs.getInt("credit_hours")));
@@ -287,21 +294,23 @@ public class StudentDataController {
                 courseData.put("time", rs.getString("time") != null ? rs.getString("time") : "TBA");
                 courseData.put("building", rs.getString("building") != null ? rs.getString("building") : "TBA");
                 courseData.put("room", rs.getString("room") != null ? rs.getString("room") : "TBA");
-                
-                // Check if this course_id is in the student's completed courses
-                if (courseId != null && completedCourses.contains(courseId)) {
+
+                // Compare normalized course IDs
+                if (courseId != null && completedSet.contains(courseId.trim().toUpperCase())) {
                     completed.add(courseData);
                 } else {
                     remaining.add(courseData);
                 }
             }
-            System.out.println("DEBUG: Program '" + program + "' - Found " + courseCount + " courses, " + completed.size() + " completed, " + remaining.size() + " remaining");
+            // Debug output for diagnosis
+            System.out.println("DEBUG: Program '" + program + "' - Required: " + requiredCourseIds);
+            System.out.println("DEBUG: Completed (normalized): " + completedSet);
+            System.out.println("DEBUG: " + completed.size() + " completed, " + remaining.size() + " remaining");
         } catch (SQLException e) {
-            // Handle error - log it for debugging
             System.err.println("Error getting requirements and progress for program '" + program + "': " + e.getMessage());
             e.printStackTrace();
         }
-        
+
         result.put("completed", completed);
         result.put("remaining", remaining);
         return result;

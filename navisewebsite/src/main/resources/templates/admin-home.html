@@ -505,6 +505,33 @@
                     <span>🎓</span> Program Management
                 </div>
 
+                <!-- List of all programs -->
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 12px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 8px;">All Programs</h3>
+                    <div th:if="${programs == null or programs.isEmpty()}" style="padding: 12px; text-align: center; color: #666;">
+                        <p>No programs found.</p>
+                    </div>
+                    <div th:if="${programs != null and !programs.isEmpty()}">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                    <th style="padding: 10px; text-align: left; font-weight: 600; color: #495057;">Program Name</th>
+                                    <th style="padding: 10px; text-align: left; font-weight: 600; color: #495057;">Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="program : ${programs}" style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px; color: #212529;" th:text="${program.name}">Program Name</td>
+                                    <td style="padding: 10px; color: #6c757d;" th:text="${program.type}">Type</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p style="margin-top: 10px; color: #6c757d; font-size: 14px;">
+                            <strong>Total Programs:</strong> <span th:text="${programs.size()}">0</span>
+                        </p>
+                    </div>
+                </div>
+
                 <div class="quick-actions">
                     <button onclick="showForm('addProgramForm')" class="action-card">
                         <div class="action-card-icon">➕</div>

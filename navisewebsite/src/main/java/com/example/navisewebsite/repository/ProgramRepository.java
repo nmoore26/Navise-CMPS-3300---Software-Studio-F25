@@ -1,3 +1,4 @@
+
 package com.example.navisewebsite.repository;
 
 import java.sql.*;
@@ -11,7 +12,33 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class ProgramRepository {
 
+
     // Add a new program (Major/Minor) to programs table only if it doesn't exist
+
+    // Fetch all programs (name and type)
+    public static class ProgramInfo {
+        public final String name;
+        public final String type;
+        public ProgramInfo(String name, String type) {
+            this.name = name;
+            this.type = type;
+        }
+    }
+
+    public java.util.List<ProgramInfo> getAllPrograms() {
+        java.util.List<ProgramInfo> programs = new java.util.ArrayList<>();
+        try (Connection conn = DatabaseUtil.connectCourses();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT program_name, program_type FROM programs ORDER BY program_type, program_name")) {
+            while (rs.next()) {
+                programs.add(new ProgramInfo(rs.getString("program_name"), rs.getString("program_type")));
+            }
+        } catch (SQLException e) {
+            System.out.println("ERROR ProgramRepository: SQL Exception when fetching all programs: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return programs;
+    }
     public int addProgram(String programName, String programType) {
         int programId = -1;
 

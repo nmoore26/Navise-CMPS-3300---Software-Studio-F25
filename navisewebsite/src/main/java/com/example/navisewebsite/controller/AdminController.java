@@ -1,3 +1,36 @@
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseBody;
+    /**
+     * Debug endpoint to view all programs in the database
+     */
+    @GetMapping("/debug/programs")
+    @ResponseBody
+    public String debugPrograms() {
+        StringBuilder result = new StringBuilder("<h2>Programs Table Debug View</h2>");
+        try (Connection conn = DatabaseUtil.connectCourses();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM programs ORDER BY program_id")) {
+            result.append("<table border='1' style='border-collapse: collapse; padding: 10px;'>");
+            result.append("<tr style='background-color: #f0f0f0;'><th>Program ID</th><th>Program Name</th><th>Program Type</th></tr>");
+            int count = 0;
+            while (rs.next()) {
+                result.append("<tr>")
+                      .append("<td style='padding: 5px;'>").append(rs.getInt("program_id")).append("</td>")
+                      .append("<td style='padding: 5px;'>").append(rs.getString("program_name")).append("</td>")
+                      .append("<td style='padding: 5px;'>").append(rs.getString("program_type")).append("</td>")
+                      .append("</tr>");
+                count++;
+            }
+            result.append("</table>");
+            result.append("<p><strong>Total programs: ").append(count).append("</strong></p>");
+            if (count == 0) {
+                result.append("<p style='color: red;'>No programs found in database!</p>");
+            }
+        } catch (SQLException e) {
+            return "<p style='color: red;'>Error: " + e.getMessage() + "</p><pre>" + e.getStackTrace() + "</pre>";
+        }
+        return result.toString();
+    }
 package com.example.navisewebsite.controller;
 
 import com.example.navisewebsite.domain.Course;
@@ -61,14 +94,19 @@ public class AdminController {
             return "redirect:/";
         }
         
-        // Pass admin email to the template
-        model.addAttribute("email", email);
-        
-        // Load all students from student_info table
-        List<StudentInfoRepository.StudentInfo> students = studentInfoRepository.findAllStudents();
-        model.addAttribute("students", students);
-        
-        return "admin-home";
+    // Pass admin email to the template
+    model.addAttribute("email", email);
+
+    // Load all students from student_info table
+    List<StudentInfoRepository.StudentInfo> students = studentInfoRepository.findAllStudents();
+    model.addAttribute("students", students);
+
+    // Load all programs from programs table
+    ProgramRepository programRepo = new ProgramRepository();
+    java.util.List<ProgramRepository.ProgramInfo> programs = programRepo.getAllPrograms();
+    model.addAttribute("programs", programs);
+
+    return "admin-home";
     }
 
     /**
@@ -271,6 +309,37 @@ public class AdminController {
         model.addAttribute("stats", stats);
         model.addAttribute("email", session.getAttribute("email"));
         return "admin-database-stats";
+    }
+    /**
+     * Debug endpoint to view all programs in the database
+     */
+    @GetMapping("/debug/programs")
+    @ResponseBody
+    public String debugPrograms() {
+        StringBuilder result = new StringBuilder("<h2>Programs Table Debug View</h2>");
+        try (Connection conn = DatabaseUtil.connectCourses();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM programs ORDER BY program_id")) {
+            result.append("<table border='1' style='border-collapse: collapse; padding: 10px;'>");
+            result.append("<tr style='background-color: #f0f0f0;'><th>Program ID</th><th>Program Name</th><th>Program Type</th></tr>");
+            int count = 0;
+            while (rs.next()) {
+                result.append("<tr>")
+                      .append("<td style='padding: 5px;'>").append(rs.getInt("program_id")).append("</td>")
+                      .append("<td style='padding: 5px;'>").append(rs.getString("program_name")).append("</td>")
+                      .append("<td style='padding: 5px;'>").append(rs.getString("program_type")).append("</td>")
+                      .append("</tr>");
+                count++;
+            }
+            result.append("</table>");
+            result.append("<p><strong>Total programs: ").append(count).append("</strong></p>");
+            if (count == 0) {
+                result.append("<p style='color: red;'>No programs found in database!</p>");
+            }
+        } catch (SQLException e) {
+            return "<p style='color: red;'>Error: " + e.getMessage() + "</p><pre>" + e.getStackTrace() + "</pre>";
+        }
+        return result.toString();
     }
 }
 
