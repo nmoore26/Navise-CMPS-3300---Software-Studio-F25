@@ -353,7 +353,9 @@
                 </div>
             </div>
 
-            <div th:if="${selectedMajor != null and !selectedMajor.isEmpty()} or ${selectedMinor != null and !selectedMinor.isEmpty()}" class="info">
+            <div th:if="${(selectedMajor != null and !#strings.isEmpty(selectedMajor)) 
+                        or (selectedMinor != null and !#strings.isEmpty(selectedMinor))}"
+                class="info">
                 Showing projected schedule for:
                 <span th:if="${selectedMajor != null and !selectedMajor.isEmpty()}"><strong>Major:</strong> <span th:text="${selectedMajor}"></span></span>
                 <span th:if="${(selectedMajor != null and !selectedMajor.isEmpty()) and (selectedMinor != null and !selectedMinor.isEmpty())}"> | </span>
