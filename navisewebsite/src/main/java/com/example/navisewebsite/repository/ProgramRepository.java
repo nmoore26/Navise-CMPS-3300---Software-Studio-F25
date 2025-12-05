@@ -16,6 +16,8 @@ public class ProgramRepository {
         int programId = -1;
 
         try (Connection conn = DatabaseUtil.connectCourses()) {
+            System.out.println("DEBUG ProgramRepository: Connected to database for adding program");
+            
             // First, check if the program already exists
             String querySql = "SELECT program_id FROM programs WHERE program_name = ? AND program_type = ?";
             try (PreparedStatement queryStmt = conn.prepareStatement(querySql)) {
@@ -25,16 +27,20 @@ public class ProgramRepository {
                 if (rs.next()) {
                     // Program already exists, return its ID
                     programId = rs.getInt("program_id");
+                    System.out.println("DEBUG ProgramRepository: Program '" + programName + "' already exists with ID: " + programId);
                     return programId;
                 }
             }
 
+            System.out.println("DEBUG ProgramRepository: Program '" + programName + "' does not exist, creating new one");
+            
             // Program doesn't exist, insert it
             String insertSql = "INSERT INTO programs(program_name, program_type) VALUES (?, ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
                 pstmt.setString(1, programName);
                 pstmt.setString(2, programType);
-                pstmt.executeUpdate();
+                int rowsAffected = pstmt.executeUpdate();
+                System.out.println("DEBUG ProgramRepository: INSERT executed, rows affected: " + rowsAffected);
             }
             
             // Get the last inserted program_id using SQLite's last_insert_rowid()
@@ -43,10 +49,16 @@ public class ProgramRepository {
                  ResultSet rs = stmt.executeQuery(lastIdSql)) {
                 if (rs.next()) {
                     programId = rs.getInt("program_id");
+                    System.out.println("DEBUG ProgramRepository: New program ID: " + programId);
                 }
             }
+            
+            // COMMIT THE TRANSACTION
+            conn.commit();
+            System.out.println("DEBUG ProgramRepository: Transaction committed successfully");
 
         } catch (SQLException e) {
+            System.out.println("ERROR ProgramRepository: SQL Exception when adding program: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -55,7 +67,7 @@ public class ProgramRepository {
 
     // Link a course to a program only if not already linked
     public void addCourseToProgram(int programId, String courseID) {
-    try (Connection conn = DatabaseUtil.connectCourses()) {
+        try (Connection conn = DatabaseUtil.connectCourses()) {
             // Check if the course is already linked to this program
             String checkSql = "SELECT COUNT(*) FROM program_courses WHERE program_id = ? AND course_id = ?";
             try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
@@ -64,6 +76,7 @@ public class ProgramRepository {
                 ResultSet rs = checkStmt.executeQuery();
                 if (rs.next() && rs.getInt(1) > 0) {
                     // Course is already linked to this program, skip
+                    System.out.println("DEBUG ProgramRepository: Course '" + courseID + "' already linked to program " + programId);
                     return;
                 }
             }
@@ -73,32 +86,45 @@ public class ProgramRepository {
             try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
                 pstmt.setInt(1, programId);
                 pstmt.setString(2, courseID);
-                pstmt.executeUpdate();
+                int rowsAffected = pstmt.executeUpdate();
+                System.out.println("DEBUG ProgramRepository: Linked course '" + courseID + "' to program " + programId + ", rows affected: " + rowsAffected);
             }
+            
+            // COMMIT THE TRANSACTION
+            conn.commit();
+            System.out.println("DEBUG ProgramRepository: Course link transaction committed");
 
         } catch (SQLException e) {
+            System.out.println("ERROR ProgramRepository: SQL Exception when linking course: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     // Remove a program by name
     public void removeProgram(String programName) {
-    try (Connection conn = DatabaseUtil.connectCourses()) {
+        try (Connection conn = DatabaseUtil.connectCourses()) {
             // First, delete all course associations for this program
             String deleteCoursesSql = "DELETE FROM program_courses WHERE program_id = (SELECT program_id FROM programs WHERE program_name = ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(deleteCoursesSql)) {
                 pstmt.setString(1, programName);
-                pstmt.executeUpdate();
+                int coursesDeleted = pstmt.executeUpdate();
+                System.out.println("DEBUG ProgramRepository: Deleted " + coursesDeleted + " course associations");
             }
 
             // Then delete the program
             String deleteProgramSql = "DELETE FROM programs WHERE program_name = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(deleteProgramSql)) {
                 pstmt.setString(1, programName);
-                pstmt.executeUpdate();
+                int programDeleted = pstmt.executeUpdate();
+                System.out.println("DEBUG ProgramRepository: Deleted " + programDeleted + " program(s)");
             }
+            
+            // COMMIT THE TRANSACTION
+            conn.commit();
+            System.out.println("DEBUG ProgramRepository: Remove program transaction committed");
 
         } catch (SQLException e) {
+            System.out.println("ERROR ProgramRepository: SQL Exception when removing program: " + e.getMessage());
             e.printStackTrace();
         }
     }

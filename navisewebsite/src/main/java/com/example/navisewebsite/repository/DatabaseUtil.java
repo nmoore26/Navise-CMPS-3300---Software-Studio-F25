@@ -16,6 +16,7 @@ public class DatabaseUtil {
         // Check for Render's persistent disk mount point first
         java.io.File renderData = new java.io.File("/data");
         if (renderData.exists() && renderData.isDirectory()) {
+            System.out.println("DEBUG DatabaseUtil: Using Render /data directory");
             return "/data";
         }
         
@@ -23,14 +24,24 @@ public class DatabaseUtil {
         String userDir = System.getProperty("user.dir");
         java.io.File naviseDir = new java.io.File(userDir, "navisewebsite");
         if (naviseDir.exists() && naviseDir.isDirectory()) {
-            return naviseDir.getAbsolutePath();
+            String path = naviseDir.getAbsolutePath();
+            System.out.println("DEBUG DatabaseUtil: Using navisewebsite subdirectory: " + path);
+            return path;
         }
+        System.out.println("DEBUG DatabaseUtil: Using current directory: " + userDir);
         return userDir;
     }
     
     private static final String USERS_DB = "jdbc:sqlite:" + DB_DIR + "/users.db";
     private static final String STUDENT_INFO_DB = "jdbc:sqlite:" + DB_DIR + "/student_info.db";
     private static final String COURSES_DB = "jdbc:sqlite:" + DB_DIR + "/courses.db";
+    
+    static {
+        System.out.println("DEBUG DatabaseUtil: Database paths initialized:");
+        System.out.println("  USERS_DB: " + USERS_DB);
+        System.out.println("  STUDENT_INFO_DB: " + STUDENT_INFO_DB);
+        System.out.println("  COURSES_DB: " + COURSES_DB);
+    }
     
     // Test mode - uses in-memory database URIs
     private static boolean testMode = false;

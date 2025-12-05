@@ -273,7 +273,9 @@ public class StudentDataController {
             ps.setString(1, program);
             ResultSet rs = ps.executeQuery();
             
+            int courseCount = 0;
             while (rs.next()) {
+                courseCount++;
                 Map<String, String> courseData = new HashMap<>();
                 // course_id is the actual course code like "MATH 1210"
                 String courseId = rs.getString("course_id");
@@ -293,9 +295,10 @@ public class StudentDataController {
                     remaining.add(courseData);
                 }
             }
+            System.out.println("DEBUG: Program '" + program + "' - Found " + courseCount + " courses, " + completed.size() + " completed, " + remaining.size() + " remaining");
         } catch (SQLException e) {
             // Handle error - log it for debugging
-            System.err.println("Error getting requirements and progress: " + e.getMessage());
+            System.err.println("Error getting requirements and progress for program '" + program + "': " + e.getMessage());
             e.printStackTrace();
         }
         
@@ -315,6 +318,11 @@ public class StudentDataController {
             while (rs.next()) {
                 programs.add(rs.getString("program_name"));
             }
+            System.out.println("DEBUG: Found " + programs.size() + " programs of type '" + type + "': " + programs);
+        } catch (SQLException e) {
+            System.err.println("ERROR: Failed to get available programs of type '" + type + "': " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
         return programs;
     }

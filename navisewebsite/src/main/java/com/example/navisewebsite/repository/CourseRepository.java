@@ -20,7 +20,7 @@ public class CourseRepository implements CourseRepositoryInterface {
                 terms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);
             """;
            
-    try (Connection conn = DatabaseUtil.connectCourses();
+        try (Connection conn = DatabaseUtil.connectCourses();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, course.get_courseID());
@@ -39,7 +39,10 @@ public class CourseRepository implements CourseRepositoryInterface {
 
             pstmt.executeUpdate();
             System.out.println("Inserting course: " + course.get_courseID());
-
+            
+            // COMMIT THE TRANSACTION
+            conn.commit();
+            System.out.println("DEBUG CourseRepository: Course insertion committed");
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -49,14 +52,22 @@ public class CourseRepository implements CourseRepositoryInterface {
     public void removeCourse(Course course) {
         String sqlDeleteProgramCourses = "DELETE FROM program_courses WHERE course_id = ?";
         String sqlDeleteCourse = "DELETE FROM courses WHERE course_id = ?";
-    try (Connection conn = DatabaseUtil.connectCourses();
+        try (Connection conn = DatabaseUtil.connectCourses();
              PreparedStatement pstmt1 = conn.prepareStatement(sqlDeleteProgramCourses);
              PreparedStatement pstmt2 = conn.prepareStatement(sqlDeleteCourse)) {
             pstmt1.setString(1, course.get_courseID());
-            pstmt1.executeUpdate();
+            int programCoursesDeleted = pstmt1.executeUpdate();
+            System.out.println("DEBUG CourseRepository: Deleted " + programCoursesDeleted + " program_courses entries");
+            
             pstmt2.setString(1, course.get_courseID());
-            pstmt2.executeUpdate();
+            int courseDeleted = pstmt2.executeUpdate();
+            System.out.println("DEBUG CourseRepository: Deleted " + courseDeleted + " course(s)");
+            
+            // COMMIT THE TRANSACTION
+            conn.commit();
+            System.out.println("DEBUG CourseRepository: Course removal committed");
         } catch (SQLException e) {
+            System.out.println("ERROR CourseRepository: SQL Exception when removing course: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -146,6 +157,10 @@ public class CourseRepository implements CourseRepositoryInterface {
             pstmt.setString(12, corequisites == null ? "" : corequisites);
             pstmt.setString(13, terms == null ? "" : terms);
             pstmt.executeUpdate();
+            
+            // COMMIT THE TRANSACTION
+            conn.commit();
+            System.out.println("DEBUG CourseRepository: insertCourse transaction committed for " + courseId);
         } catch (SQLException e) {
             // Silently ignore duplicate key errors (course already exists)
             if (!e.getMessage().contains("UNIQUE constraint failed") && !e.getMessage().contains("PRIMARY KEY")) {
@@ -187,14 +202,19 @@ public class CourseRepository implements CourseRepositoryInterface {
     public void addNTCRequirement(String requirement, int num) {
         String sql = "INSERT INTO ntc_requirements (ntc_requirement, num_classes) VALUES (?, ?)";
 
-    try (Connection conn = DatabaseUtil.connectCourses();
+        try (Connection conn = DatabaseUtil.connectCourses();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, requirement);
             pstmt.setInt(2, num);
             pstmt.executeUpdate();
+            
+            // COMMIT THE TRANSACTION
+            conn.commit();
+            System.out.println("DEBUG CourseRepository: NTC requirement added and committed");
 
         } catch (SQLException e) {
+            System.out.println("ERROR CourseRepository: SQL Exception when adding NTC requirement: " + e.getMessage());
             e.printStackTrace();
         }
     }

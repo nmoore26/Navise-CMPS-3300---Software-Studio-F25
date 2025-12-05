@@ -138,11 +138,15 @@ public class AdminController {
             return adminHome(session, model);
         }
 
+        System.out.println("DEBUG: Adding program '" + programName + "' of type '" + programType + "'");
+        
         ProgramRepository programRepo = new ProgramRepository();
         int programId = programRepo.addProgram(programName, programType);
 
+        System.out.println("DEBUG: Program saved with ID: " + programId);
+        
         if (programId != -1) {
-            model.addAttribute("message", "Program added successfully!");
+            model.addAttribute("message", "Program added successfully! (ID: " + programId + ")");
         } else {
             model.addAttribute("error", "Failed to add program. It may already exist.");
         }
