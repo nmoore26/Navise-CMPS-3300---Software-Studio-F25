@@ -43,6 +43,7 @@ public class ProgramRepository {
         int programId = -1;
 
         try (Connection conn = DatabaseUtil.connectCourses()) {
+            conn.setAutoCommit(false);
             System.out.println("DEBUG ProgramRepository: Connected to database for adding program");
             
             // First, check if the program already exists
@@ -95,6 +96,7 @@ public class ProgramRepository {
     // Link a course to a program only if not already linked
     public void addCourseToProgram(int programId, String courseID) {
         try (Connection conn = DatabaseUtil.connectCourses()) {
+            conn.setAutoCommit(false);
             // Check if the course is already linked to this program
             String checkSql = "SELECT COUNT(*) FROM program_courses WHERE program_id = ? AND course_id = ?";
             try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
@@ -130,6 +132,7 @@ public class ProgramRepository {
     // Remove a program by name
     public void removeProgram(String programName) {
         try (Connection conn = DatabaseUtil.connectCourses()) {
+            conn.setAutoCommit(false);
             // First, delete all course associations for this program
             String deleteCoursesSql = "DELETE FROM program_courses WHERE program_id = (SELECT program_id FROM programs WHERE program_name = ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(deleteCoursesSql)) {

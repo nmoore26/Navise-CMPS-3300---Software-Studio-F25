@@ -20,8 +20,9 @@ public class CourseRepository implements CourseRepositoryInterface {
                 terms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);
             """;
            
-        try (Connection conn = DatabaseUtil.connectCourses();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+       try (Connection conn = DatabaseUtil.connectCourses();
+           PreparedStatement pstmt = conn.prepareStatement(sql)) {
+          conn.setAutoCommit(false);
 
             pstmt.setString(1, course.get_courseID());
             pstmt.setString(2, course.get_course_name());
@@ -39,7 +40,6 @@ public class CourseRepository implements CourseRepositoryInterface {
 
             pstmt.executeUpdate();
             System.out.println("Inserting course: " + course.get_courseID());
-            
             // COMMIT THE TRANSACTION
             conn.commit();
             System.out.println("DEBUG CourseRepository: Course insertion committed");
@@ -52,9 +52,10 @@ public class CourseRepository implements CourseRepositoryInterface {
     public void removeCourse(Course course) {
         String sqlDeleteProgramCourses = "DELETE FROM program_courses WHERE course_id = ?";
         String sqlDeleteCourse = "DELETE FROM courses WHERE course_id = ?";
-        try (Connection conn = DatabaseUtil.connectCourses();
-             PreparedStatement pstmt1 = conn.prepareStatement(sqlDeleteProgramCourses);
-             PreparedStatement pstmt2 = conn.prepareStatement(sqlDeleteCourse)) {
+       try (Connection conn = DatabaseUtil.connectCourses();
+           PreparedStatement pstmt1 = conn.prepareStatement(sqlDeleteProgramCourses);
+           PreparedStatement pstmt2 = conn.prepareStatement(sqlDeleteCourse)) {
+          conn.setAutoCommit(false);
             pstmt1.setString(1, course.get_courseID());
             int programCoursesDeleted = pstmt1.executeUpdate();
             System.out.println("DEBUG CourseRepository: Deleted " + programCoursesDeleted + " program_courses entries");
@@ -143,6 +144,7 @@ public class CourseRepository implements CourseRepositoryInterface {
             """;
     try (Connection conn = DatabaseUtil.connectCourses();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            conn.setAutoCommit(false);
             pstmt.setString(1, courseId);
             pstmt.setString(2, courseName);
             pstmt.setString(3, courseCode);
@@ -202,8 +204,9 @@ public class CourseRepository implements CourseRepositoryInterface {
     public void addNTCRequirement(String requirement, int num) {
         String sql = "INSERT INTO ntc_requirements (ntc_requirement, num_classes) VALUES (?, ?)";
 
-        try (Connection conn = DatabaseUtil.connectCourses();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+       try (Connection conn = DatabaseUtil.connectCourses();
+           PreparedStatement pstmt = conn.prepareStatement(sql)) {
+          conn.setAutoCommit(false);
 
             pstmt.setString(1, requirement);
             pstmt.setInt(2, num);

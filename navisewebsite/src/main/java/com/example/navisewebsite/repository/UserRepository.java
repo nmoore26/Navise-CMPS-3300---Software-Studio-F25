@@ -109,6 +109,7 @@ public class UserRepository {
                 return -1;
             }
 
+
             // Get the last inserted user_id by querying the same connection
             String lastIdSql = "SELECT last_insert_rowid() as user_id";
             try (Statement stmt = conn.createStatement();
@@ -119,8 +120,8 @@ public class UserRepository {
             }
         } catch (SQLException e) {
             // Check for unique constraint violation (duplicate email)
-            if (e.getSQLState() != null && (e.getSQLState().equals("23505") || e.getMessage().contains("duplicate key value"))) {
-                // PostgreSQL unique violation SQLSTATE is 23505
+            // SQLite uses error code 19 for constraint violation
+            if (e.getErrorCode() == 19 || (e.getMessage() != null && e.getMessage().toLowerCase().contains("unique"))) {
                 return -1;
             }
             e.printStackTrace();
