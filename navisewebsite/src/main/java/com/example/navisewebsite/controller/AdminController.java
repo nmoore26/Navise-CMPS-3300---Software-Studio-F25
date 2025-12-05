@@ -3,6 +3,7 @@ package com.example.navisewebsite.controller;
 import com.example.navisewebsite.domain.Course;
 import com.example.navisewebsite.repository.ProgramRepository;
 import com.example.navisewebsite.repository.StudentInfoRepository;
+import com.example.navisewebsite.repository.DatabaseUtil;
 import com.example.navisewebsite.service.AdminCourseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,7 +14,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpSession;
 
+import java.sql.*;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Controller for handling admin actions like adding courses
@@ -161,6 +165,108 @@ public class AdminController {
         model.addAttribute("message", "Program removed successfully!");
 
         return adminHome(session, model);
+    }
+
+    /**
+     * Update a student's major/minor information
+     */
+    @PostMapping("/admin/update-student-info")
+    public String updateStudentInfo(@RequestParam Integer userId,
+                                     @RequestParam String major,
+                                     @RequestParam String minor,
+                                     HttpSession session,
+                                     Model model) {
+        Object userType = session.getAttribute("userType");
+        if (userType == null || !"admin".equals(userType)) {
+            return "redirect:/";
+        }
+
+        try (Connection conn = DatabaseUtil.connectStudentInfo(); 
+             PreparedStatement ps = conn.prepareStatement(
+                "UPDATE student_info SET major = ?, minor = ? WHERE user_id = ?")) {
+            ps.setString(1, major);
+            ps.setString(2, minor);
+            ps.setInt(3, userId);
+            int rows = ps.executeUpdate();
+            
+            if (rows > 0) {
+                model.addAttribute("message", "Student info updated successfully!");
+            } else {
+                model.addAttribute("error", "Student not found or could not be updated.");
+            }
+        } catch (SQLException e) {
+            model.addAttribute("error", "Database error: " + e.getMessage());
+        }
+
+        // Reload student list
+        List<StudentInfoRepository.StudentInfo> students = studentInfoRepository.findAllStudents();
+        model.addAttribute("students", students);
+        model.addAttribute("email", session.getAttribute("email"));
+        return "admin-home";
+    }
+
+    /**
+     * Get database statistics for admin monitoring
+     */
+    @GetMapping("/admin/database-stats")
+    public String getDatabaseStats(HttpSession session, Model model) {
+        Object userType = session.getAttribute("userType");
+        if (userType == null || !"admin".equals(userType)) {
+            return "redirect:/";
+        }
+
+        Map<String, Integer> stats = new HashMap<>();
+        
+        try {
+            // Count users
+            try (Connection conn = DatabaseUtil.connectUsers(); 
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM users")) {
+                if (rs.next()) stats.put("users", rs.getInt("count"));
+            }
+
+            // Count students
+            try (Connection conn = DatabaseUtil.connectStudentInfo(); 
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM student_info")) {
+                if (rs.next()) stats.put("students", rs.getInt("count"));
+            }
+
+            // Count courses
+            try (Connection conn = DatabaseUtil.connectCourses(); 
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM courses")) {
+                if (rs.next()) stats.put("courses", rs.getInt("count"));
+            }
+
+            // Count programs
+            try (Connection conn = DatabaseUtil.connectCourses(); 
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM programs")) {
+                if (rs.next()) stats.put("programs", rs.getInt("count"));
+            }
+
+            // Count program_courses links
+            try (Connection conn = DatabaseUtil.connectCourses(); 
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM program_courses")) {
+                if (rs.next()) stats.put("program_courses", rs.getInt("count"));
+            }
+
+            // Count NTC requirements
+            try (Connection conn = DatabaseUtil.connectCourses(); 
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM ntc_requirements")) {
+                if (rs.next()) stats.put("ntc_requirements", rs.getInt("count"));
+            }
+
+        } catch (SQLException e) {
+            model.addAttribute("error", "Error fetching statistics: " + e.getMessage());
+        }
+
+        model.addAttribute("stats", stats);
+        model.addAttribute("email", session.getAttribute("email"));
+        return "admin-database-stats";
     }
 }
 
