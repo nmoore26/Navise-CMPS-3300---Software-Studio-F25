@@ -62,6 +62,10 @@ public class LoginController {
                     session.setAttribute("email", email);
                     session.setAttribute("userType", "student");
                     
+                    System.out.println("DEBUG: Login successful for " + email);
+                    System.out.println("DEBUG: Session ID = " + session.getId());
+                    System.out.println("DEBUG: userType set to = " + session.getAttribute("userType"));
+                    
                     // Load student profile info from student_info.db
                     Optional<StudentInfo> studentInfoOpt = studentInfoRepository.findByUserId(user.getUserId());
                     if (studentInfoOpt.isPresent()) {
