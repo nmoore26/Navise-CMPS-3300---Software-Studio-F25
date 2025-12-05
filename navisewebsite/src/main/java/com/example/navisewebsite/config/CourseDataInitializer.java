@@ -11,9 +11,10 @@ import org.springframework.context.annotation.Configuration;
 
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import com.example.navisewebsite.repository.DatabaseUtil;
 
 @Configuration
 public class CourseDataInitializer {
@@ -108,9 +109,9 @@ public class CourseDataInitializer {
     private void insertCourseViaSql(String courseId, String courseName, String courseCode, int creditHours,
                                     String professor, String days, String time, String building, String room,
                                     String attributes, String prerequisites, String corequisites, String terms) {
-        String dbPath = System.getProperty("user.dir") + "/courses.db";
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath); 
-             Statement stmt = conn.createStatement()) {
+       try (Connection conn = DatabaseUtil.connectCourses();
+           Statement stmt = conn.createStatement()) {
+           conn.setAutoCommit(false);
             String sql = String.format(
                 "INSERT OR IGNORE INTO courses (course_id, course_name, course_code, credit_hours, professor, days, time, building, room, attributes, prerequisites, corequisites, terms) " +
                 "VALUES ('%s', '%s', '%s', %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
@@ -129,36 +130,33 @@ public class CourseDataInitializer {
                 terms == null ? "" : terms.replace("'", "''")
             );
             stmt.executeUpdate(sql);
+           conn.commit();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
     
     private void ensureDatabaseTablesExist() {
-        String dbPath = System.getProperty("user.dir") + "/courses.db";
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath); 
-             Statement stmt = conn.createStatement()) {
-            
-            // Create courses table
-            stmt.execute("CREATE TABLE IF NOT EXISTS courses (course_id TEXT PRIMARY KEY, course_name TEXT, course_code TEXT, credit_hours INTEGER, professor TEXT, days TEXT, time TEXT, building TEXT, room TEXT, attributes TEXT, prerequisites TEXT, corequisites TEXT, terms TEXT)");
-            
-            // Create programs table
-            stmt.execute("CREATE TABLE IF NOT EXISTS programs (program_id INTEGER PRIMARY KEY AUTOINCREMENT, program_name TEXT, program_type TEXT)");
-            
-            // Create program_courses junction table
-            stmt.execute("CREATE TABLE IF NOT EXISTS program_courses (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER NOT NULL, course_id TEXT NOT NULL, UNIQUE(program_id, course_id), FOREIGN KEY(program_id) REFERENCES programs(program_id) ON DELETE CASCADE, FOREIGN KEY(course_id) REFERENCES courses(course_id) ON DELETE CASCADE)");
-            
-            // Create ntc_requirements table
-            stmt.execute("CREATE TABLE IF NOT EXISTS ntc_requirements (id INTEGER PRIMARY KEY AUTOINCREMENT, requirement_name TEXT, description TEXT)");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+       try (Connection conn = DatabaseUtil.connectCourses();
+           Statement stmt = conn.createStatement()) {
+           conn.setAutoCommit(false);
+           // Create courses table
+           stmt.execute("CREATE TABLE IF NOT EXISTS courses (course_id TEXT PRIMARY KEY, course_name TEXT, course_code TEXT, credit_hours INTEGER, professor TEXT, days TEXT, time TEXT, building TEXT, room TEXT, attributes TEXT, prerequisites TEXT, corequisites TEXT, terms TEXT)");
+           // Create programs table
+           stmt.execute("CREATE TABLE IF NOT EXISTS programs (program_id INTEGER PRIMARY KEY AUTOINCREMENT, program_name TEXT, program_type TEXT)");
+           // Create program_courses junction table
+           stmt.execute("CREATE TABLE IF NOT EXISTS program_courses (id INTEGER PRIMARY KEY AUTOINCREMENT, program_id INTEGER NOT NULL, course_id TEXT NOT NULL, UNIQUE(program_id, course_id), FOREIGN KEY(program_id) REFERENCES programs(program_id) ON DELETE CASCADE, FOREIGN KEY(course_id) REFERENCES courses(course_id) ON DELETE CASCADE)");
+           // Create ntc_requirements table
+           stmt.execute("CREATE TABLE IF NOT EXISTS ntc_requirements (id INTEGER PRIMARY KEY AUTOINCREMENT, requirement_name TEXT, description TEXT)");
+           conn.commit();
+       } catch (SQLException e) {
+           e.printStackTrace();
+       }
     }
     
     private void populateProgramsAndLinks(Workbook wb) throws SQLException {
-        String dbPath = System.getProperty("user.dir") + "/courses.db";
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath); 
-             Statement stmt = conn.createStatement()) {
+       try (Connection conn = DatabaseUtil.connectCourses();
+           Statement stmt = conn.createStatement()) {
             
             // Clear existing data
             stmt.executeUpdate("DELETE FROM program_courses");
@@ -227,9 +225,8 @@ public class CourseDataInitializer {
     }
     
     private void populateNtcRequirements(Workbook wb) throws SQLException {
-        String dbPath = System.getProperty("user.dir") + "/courses.db";
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath); 
-             Statement stmt = conn.createStatement()) {
+       try (Connection conn = DatabaseUtil.connectCourses();
+           Statement stmt = conn.createStatement()) {
             
             // Clear existing data
             stmt.executeUpdate("DELETE FROM ntc_requirements");
