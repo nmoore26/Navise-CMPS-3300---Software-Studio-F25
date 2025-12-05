@@ -27,6 +27,120 @@ import java.util.Map;
  */
 @Controller
 public class AdminController {
+    /**
+     * Debug endpoint to view all data in the database
+     */
+    @GetMapping("/debug/all-data")
+    @ResponseBody
+    public String debugAllData() {
+        StringBuilder result = new StringBuilder("<h1>Complete Database Debug View</h1>");
+        // USERS
+        result.append("<h2>Users Table</h2>");
+        try (Connection conn = DatabaseUtil.connectUsers();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM users")) {
+            result.append("<table border='1' style='border-collapse: collapse; margin-bottom: 30px;'>");
+            result.append("<tr><th>User ID</th><th>Email</th><th>First Name</th><th>Last Name</th><th>User Type</th></tr>");
+            while (rs.next()) {
+                result.append("<tr>")
+                      .append("<td>").append(rs.getInt("user_id")).append("</td>")
+                      .append("<td>").append(rs.getString("email")).append("</td>")
+                      .append("<td>").append(rs.getString("first_name")).append("</td>")
+                      .append("<td>").append(rs.getString("last_name")).append("</td>")
+                      .append("<td>").append(rs.getString("user_type")).append("</td>")
+                      .append("</tr>");
+            }
+            result.append("</table>");
+        } catch (SQLException e) {
+            result.append("<p style='color: red;'>Error loading users: ").append(e.getMessage()).append("</p>");
+        }
+        // STUDENT_INFO
+        result.append("<h2>Student Info Table</h2>");
+        try (Connection conn = DatabaseUtil.connectStudentInfo();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM student_info")) {
+            result.append("<table border='1' style='border-collapse: collapse; margin-bottom: 30px;'>");
+            result.append("<tr><th>ID</th><th>User ID</th><th>First Name</th><th>Last Name</th><th>Major</th><th>Minor</th><th>School Year</th><th>Past Courses</th></tr>");
+            while (rs.next()) {
+                result.append("<tr>")
+                      .append("<td>").append(rs.getInt("id")).append("</td>")
+                      .append("<td>").append(rs.getInt("user_id")).append("</td>")
+                      .append("<td>").append(rs.getString("first_name")).append("</td>")
+                      .append("<td>").append(rs.getString("last_name")).append("</td>")
+                      .append("<td>").append(rs.getString("major")).append("</td>")
+                      .append("<td>").append(rs.getString("minor")).append("</td>")
+                      .append("<td>").append(rs.getString("school_year")).append("</td>")
+                      .append("<td>").append(rs.getString("past_courses")).append("</td>")
+                      .append("</tr>");
+            }
+            result.append("</table>");
+        } catch (SQLException e) {
+            result.append("<p style='color: red;'>Error loading student_info: ").append(e.getMessage()).append("</p>");
+        }
+        // PROGRAMS
+        result.append("<h2>Programs Table</h2>");
+        try (Connection conn = DatabaseUtil.connectCourses();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM programs")) {
+            result.append("<table border='1' style='border-collapse: collapse; margin-bottom: 30px;'>");
+            result.append("<tr><th>Program ID</th><th>Program Name</th><th>Program Type</th></tr>");
+            while (rs.next()) {
+                result.append("<tr>")
+                      .append("<td>").append(rs.getInt("program_id")).append("</td>")
+                      .append("<td>").append(rs.getString("program_name")).append("</td>")
+                      .append("<td>").append(rs.getString("program_type")).append("</td>")
+                      .append("</tr>");
+            }
+            result.append("</table>");
+        } catch (SQLException e) {
+            result.append("<p style='color: red;'>Error loading programs: ").append(e.getMessage()).append("</p>");
+        }
+        // PROGRAM_COURSES
+        result.append("<h2>Program-Courses Links</h2>");
+        try (Connection conn = DatabaseUtil.connectCourses();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(
+                 "SELECT pc.id, pc.program_id, p.program_name, pc.course_id " +
+                 "FROM program_courses pc " +
+                 "JOIN programs p ON pc.program_id = p.program_id")) {
+            result.append("<table border='1' style='border-collapse: collapse; margin-bottom: 30px;'>");
+            result.append("<tr><th>ID</th><th>Program ID</th><th>Program Name</th><th>Course ID</th></tr>");
+            int count = 0;
+            while (rs.next()) {
+                result.append("<tr>")
+                      .append("<td>").append(rs.getInt("id")).append("</td>")
+                      .append("<td>").append(rs.getInt("program_id")).append("</td>")
+                      .append("<td>").append(rs.getString("program_name")).append("</td>")
+                      .append("<td>").append(rs.getString("course_id")).append("</td>")
+                      .append("</tr>");
+                count++;
+            }
+            result.append("</table>");
+            result.append("<p><strong>Total links: ").append(count).append("</strong></p>");
+        } catch (SQLException e) {
+            result.append("<p style='color: red;'>Error loading program_courses: ").append(e.getMessage()).append("</p>");
+        }
+        // COURSES (first 20)
+        result.append("<h2>Courses Table (first 20)</h2>");
+        try (Connection conn = DatabaseUtil.connectCourses();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM courses LIMIT 20")) {
+            result.append("<table border='1' style='border-collapse: collapse;'>");
+            result.append("<tr><th>Course ID</th><th>Course Name</th><th>Credit Hours</th><th>Professor</th></tr>");
+            while (rs.next()) {
+                result.append("<tr>")
+                      .append("<td>").append(rs.getString("course_id")).append("</td>")
+                      .append("<td>").append(rs.getString("course_name")).append("</td>")
+                      .append("<td>").append(rs.getInt("credit_hours")).append("</td>")
+                      .append("<td>").append(rs.getString("professor")).append("</td>")
+                      .append("</tr>");
+            }
+            result.append("</table>");
+        } catch (SQLException e) {
+            result.append("<p style='color: red;'>Error loading courses: ").append(e.getMessage()).append("</p>");
+        }
+        return result.toString();
+    }
 
     @Autowired
     private AdminCourseService courseService;
