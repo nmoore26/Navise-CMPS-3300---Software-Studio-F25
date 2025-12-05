@@ -96,7 +96,9 @@ public class DatabaseUtil {
     private static void initializeUsers() {
         try (Connection conn = connectUsers(); Statement stmt = conn.createStatement()) {
             stmt.execute("CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT, first_name TEXT, last_name TEXT, user_type TEXT)");
+            System.out.println("✓ users table initialized successfully");
         } catch (SQLException e) {
+            System.err.println("✗ Error initializing users table: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -104,7 +106,9 @@ public class DatabaseUtil {
     private static void initializeStudentInfo() {
         try (Connection conn = connectStudentInfo(); Statement stmt = conn.createStatement()) {
             stmt.execute("CREATE TABLE IF NOT EXISTS student_info (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, first_name TEXT, last_name TEXT, major TEXT, minor TEXT, school_year TEXT, past_courses TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(user_id))");
+            System.out.println("✓ student_info table initialized successfully");
         } catch (SQLException e) {
+            System.err.println("✗ Error initializing student_info table: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -123,9 +127,11 @@ public class DatabaseUtil {
             // Create ntc_requirements table
             stmt.execute("CREATE TABLE IF NOT EXISTS ntc_requirements (id INTEGER PRIMARY KEY AUTOINCREMENT, requirement_name TEXT, description TEXT)");
             
+            System.out.println("✓ courses, programs, program_courses, and ntc_requirements tables initialized successfully");
             // NOTE: DO NOT populate program_courses here - CourseDataInitializer handles this
             // after loading all courses from the Excel file
         } catch (SQLException e) {
+            System.err.println("✗ Error initializing courses schema: " + e.getMessage());
             e.printStackTrace();
         }
     }

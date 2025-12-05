@@ -15,33 +15,23 @@ WORKDIR /app
 
 COPY --from=builder /app/target/navisewebsite-0.0.1-SNAPSHOT.jar app.jar
 
-# Copy database files to /tmp (initial data)
-COPY navisewebsite/users.db /tmp/users.db
+# Copy database files to /tmp (initial data with courses)
 COPY navisewebsite/courses.db /tmp/courses.db
-COPY navisewebsite/student_info.db /tmp/student_info.db
 
-# Create initialization script
+# Create initialization script - let Java create schema, just seed initial courses data
 RUN echo '#!/bin/sh' > /app/init.sh && \
     echo 'mkdir -p /data' >> /app/init.sh && \
     echo '' >> /app/init.sh && \
-    echo '# Initialize databases if they do not exist' >> /app/init.sh && \
-    echo 'if [ ! -f /data/users.db ]; then' >> /app/init.sh && \
-    echo '  echo "Initializing users.db..."' >> /app/init.sh && \
-    echo '  cp /tmp/users.db /data/users.db' >> /app/init.sh && \
-    echo 'fi' >> /app/init.sh && \
-    echo '' >> /app/init.sh && \
+    echo '# Copy courses.db from /tmp if not already present (contains course data)' >> /app/init.sh && \
     echo 'if [ ! -f /data/courses.db ]; then' >> /app/init.sh && \
-    echo '  echo "Initializing courses.db..."' >> /app/init.sh && \
+    echo '  echo "First run - copying courses.db with course data..."' >> /app/init.sh && \
     echo '  cp /tmp/courses.db /data/courses.db' >> /app/init.sh && \
+    echo 'else' >> /app/init.sh && \
+    echo '  echo "Using existing courses.db from persistent disk"' >> /app/init.sh && \
     echo 'fi' >> /app/init.sh && \
     echo '' >> /app/init.sh && \
-    echo 'if [ ! -f /data/student_info.db ]; then' >> /app/init.sh && \
-    echo '  echo "Initializing student_info.db..."' >> /app/init.sh && \
-    echo '  cp /tmp/student_info.db /data/student_info.db' >> /app/init.sh && \
-    echo 'fi' >> /app/init.sh && \
-    echo '' >> /app/init.sh && \
-    echo 'echo "All databases ready!"' >> /app/init.sh && \
-    echo 'echo "Starting application..."' >> /app/init.sh && \
+    echo '# Java application will create users.db and student_info.db on startup' >> /app/init.sh && \
+    echo 'echo "Starting application - schema initialization handled by Spring Boot..."' >> /app/init.sh && \
     echo 'exec java -Dserver.port=${PORT:-8080} -jar app.jar' >> /app/init.sh && \
     chmod +x /app/init.sh
 

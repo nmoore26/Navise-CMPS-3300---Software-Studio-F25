@@ -1,5 +1,6 @@
 package com.example.navisewebsite.controller;
 
+import com.example.navisewebsite.repository.DatabaseUtil;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,21 +20,6 @@ import java.util.*;
 
 @Controller
 public class StudentDataController {
-    
-    // Get database paths - look for navisewebsite directory if running from root
-    private static String getDbPath(String dbName) {
-        String userDir = System.getProperty("user.dir");
-        java.io.File naviseDir = new java.io.File(userDir, "navisewebsite");
-        if (naviseDir.exists() && naviseDir.isDirectory()) {
-            return "jdbc:sqlite:" + naviseDir.getAbsolutePath() + "/" + dbName;
-        }
-        return "jdbc:sqlite:" + userDir + "/" + dbName;
-    }
-    
-    // SQLite connection details
-    private static final String COURSES_DB_URL = getDbPath("courses.db");
-    private static final String USERS_DB_URL = getDbPath("users.db");
-    private static final String STUDENT_INFO_DB_URL = getDbPath("student_info.db");
     
     // Helper to check authentication
     private boolean isAuthenticated(HttpSession session) {
@@ -65,7 +51,7 @@ public class StudentDataController {
             return "student-my-courses";
         }
         
-    try (Connection conn = DriverManager.getConnection(STUDENT_INFO_DB_URL)) {
+    try (Connection conn = DatabaseUtil.connectStudentInfo()) {
             String sql = "SELECT major, minor, past_courses FROM student_info WHERE user_id = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);
@@ -111,7 +97,7 @@ public class StudentDataController {
             return "student-degree-progress";
         }
         
-    try (Connection conn = DriverManager.getConnection(STUDENT_INFO_DB_URL)) {
+    try (Connection conn = DatabaseUtil.connectStudentInfo()) {
             // Get student's major, minor, and past courses
             String sql = "SELECT major, minor, past_courses FROM student_info WHERE user_id = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -277,7 +263,7 @@ public class StudentDataController {
         List<Map<String, String>> completed = new ArrayList<>();
         List<Map<String, String>> remaining = new ArrayList<>();
         
-    try (Connection conn = DriverManager.getConnection(COURSES_DB_URL)) {
+    try (Connection conn = DatabaseUtil.connectCourses()) {
             // Get requirements for the program by joining programs -> program_courses -> courses
             String sql = "SELECT c.* FROM courses c " +
                     "JOIN program_courses pc ON c.course_id = pc.course_id " +
@@ -320,7 +306,7 @@ public class StudentDataController {
     
     private List<String> getAvailablePrograms(String type) throws SQLException {
         List<String> programs = new ArrayList<>();
-    try (Connection conn = DriverManager.getConnection(COURSES_DB_URL)) {
+    try (Connection conn = DatabaseUtil.connectCourses()) {
             String sql = "SELECT DISTINCT program_name FROM programs WHERE program_type = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, type);
@@ -335,7 +321,7 @@ public class StudentDataController {
     
 /*      private List<String> getStudentCompletedCourses(Integer userId) throws SQLException {
         List<String> completedCourses = new ArrayList<>();
-    try (Connection conn = DriverManager.getConnection(STUDENT_INFO_DB_URL)) {
+    try (Connection conn = DatabaseUtil.connectStudentInfo()) {
             String sql = "SELECT past_courses FROM student_info WHERE user_id = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);
@@ -352,7 +338,7 @@ public class StudentDataController {
     private List<Map<String, Object>> getAllCoursesForProgram(String programName) throws SQLException {
         List<Map<String, Object>> courses = new ArrayList<>();
         
-    try (Connection conn = DriverManager.getConnection(COURSES_DB_URL)) {
+    try (Connection conn = DatabaseUtil.connectCourses()) {
             // Get ALL required courses for the program
             String sql = "SELECT c.course_id, c.course_name, c.credit_hours, c.professor, " +
                     "c.days, c.time, c.building, c.room " +
@@ -390,7 +376,7 @@ public class StudentDataController {
 /*     private List<Map<String, Object>> getCoursesForProgram(String programName, List<String> completedCourses) throws SQLException {
         List<Map<String, Object>> courses = new ArrayList<>();
         
-    try (Connection conn = DriverManager.getConnection(COURSES_DB_URL)) {
+    try (Connection conn = DatabaseUtil.connectCourses()) {
             // Get all required courses for the program that haven't been completed
             String sql = "SELECT c.course_id, c.course_name, c.credit_hours, c.professor, " +
                     "c.days, c.time, c.building, c.room " +

@@ -11,9 +11,14 @@ public class DatabaseInitializationConfig {
     @Bean
     public CommandLineRunner initializeDatabases() {
         return args -> {
+            System.out.println("========================================");
+            System.out.println("Starting Database Initialization...");
+            System.out.println("========================================");
             // Initialize databases and create tables on application startup
             DatabaseUtil.initializeDatabases();
-            System.out.println("Databases initialized successfully.");
+            System.out.println("========================================");
+            System.out.println("✓ Databases initialized successfully.");
+            System.out.println("========================================");
         };
     }
 }
