@@ -1,6 +1,8 @@
 package com.example.navisewebsite.repository;
 
 import com.example.navisewebsite.domain.User;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,22 +13,28 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for UserRepository CRUD operations.
  * Tests user authentication functionality including finding, adding, and updating users.
+ * Uses in-memory SQLite database for testing.
  */
 public class UserRepositoryTest {
 
     private UserRepository userRepository;
 
+    @BeforeAll
+    public static void setUpAll() {
+        // Initialize in-memory test databases once for all tests
+        TestDatabaseConfig.initializeTestDatabases();
+    }
+
+    @AfterAll
+    public static void tearDownAll() {
+        // Close test databases after all tests
+        TestDatabaseConfig.closeTestDatabases();
+    }
+
     @BeforeEach
     public void setUp() {
-        // Initialize test database with fresh users table for each test
-        // Use TRUNCATE for PostgreSQL compatibility
-        DatabaseUtil.clearUsersTable();
-        try (java.sql.Connection conn = DatabaseUtil.connect();
-             java.sql.Statement stmt = conn.createStatement()) {
-            stmt.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE");
-        } catch (java.sql.SQLException e) {
-            e.printStackTrace();
-        }
+        // Clear all data before each test for test isolation
+        TestDatabaseConfig.clearAllData();
         userRepository = new UserRepository();
     }
 

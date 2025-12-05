@@ -1,8 +1,11 @@
 package com.example.navisewebsite.controller;
 
 import com.example.navisewebsite.repository.CourseRepository;
+import com.example.navisewebsite.repository.TestDatabaseConfig;
 import com.example.navisewebsite.domain.Course;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,7 +22,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class AdminControllerIntegrationTest {
 
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -28,59 +30,22 @@ public class AdminControllerIntegrationTest {
 
     private MockHttpSession adminSession;
 
+    @BeforeAll
+    public static void setUpAll() {
+        // Initialize in-memory test databases once for all tests
+        TestDatabaseConfig.initializeTestDatabases();
+    }
+
+    @AfterAll
+    public static void tearDownAll() {
+        // Close test databases after all tests
+        TestDatabaseConfig.closeTestDatabases();
+    }
+
     @BeforeEach
     public void setup() throws Exception {
-        // Ensure all connections use the shared in-memory test DB
-        // Explicitly initialize schema for in-memory DB
-        try (java.sql.Connection conn = com.example.navisewebsite.repository.DatabaseUtil.connect();
-             java.sql.Statement stmt = conn.createStatement()) {
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS courses (
-                    course_id TEXT PRIMARY KEY,
-                    course_name TEXT NOT NULL,
-                    course_code TEXT NOT NULL,
-                    credit_hours INTEGER NOT NULL,
-                    professor TEXT,
-                    days TEXT,
-                    time TEXT,
-                    building TEXT,
-                    room TEXT,
-                    attributes TEXT,
-                    prerequisites TEXT,
-                    corequisites TEXT,
-                    terms TEXT
-                );
-            """);
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS programs (
-                        program_id SERIAL PRIMARY KEY,
-                    program_name TEXT NOT NULL,
-                    program_type TEXT NOT NULL
-                );
-            """);
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS program_courses (
-                    program_id INTEGER NOT NULL,
-                    course_id TEXT NOT NULL,
-                    PRIMARY KEY (program_id, course_id),
-                        FOREIGN KEY (program_id) REFERENCES programs(program_id) ON DELETE CASCADE,
-                        FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
-                );
-            """);
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS student_info (
-                        id SERIAL PRIMARY KEY,
-                    user_id INTEGER NOT NULL,
-                    first_name TEXT,
-                    last_name TEXT,
-                    major TEXT,
-                    minor TEXT,
-                    school_year TEXT,
-                    past_courses TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """);
-        }
+        // Clear all data before each test for test isolation
+        TestDatabaseConfig.clearAllData();
         
         // Create a mock admin session
         adminSession = new MockHttpSession();

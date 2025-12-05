@@ -305,11 +305,11 @@ public class ProjectedSchedule {
     }
 
     // SQLite CourseRepository with defensive fallback queries
-    // PostgreSQL CourseRepository implementation
-    public static CourseRepository postgresCourseRepository() {
+    // SQLite CourseRepository implementation
+    public static CourseRepository sqliteCourseRepository() {
         return new CourseRepository() {
             private Connection connect() throws SQLException {
-                return DriverManager.getConnection("jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway", "postgres", "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp");
+                return DriverManager.getConnection("jdbc:sqlite:courses.db");
             }
 
             @Override
@@ -379,11 +379,11 @@ public class ProjectedSchedule {
     }
 
     // SQLite UserRepository
-    // PostgreSQL UserRepository implementation
-    public static UserRepository postgresUserRepository() {
+    // SQLite UserRepository implementation
+    public static UserRepository sqliteUserRepository() {
         return new UserRepository() {
             private Connection connect() throws SQLException {
-                return DriverManager.getConnection("jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway", "postgres", "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp");
+                return DriverManager.getConnection("jdbc:sqlite:student_info.db");
             }
 
             @Override
@@ -414,7 +414,7 @@ public class ProjectedSchedule {
                 "FROM user_courses uc JOIN courses c ON uc.course_id = c.id WHERE uc.user_id = ? " +
                 "ORDER BY uc.semester_label, c.code";
         Map<String, SemesterPlan> map = new LinkedHashMap<>();
-    try (Connection conn = DriverManager.getConnection("jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway", "postgres", "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp");
+    try (Connection conn = DriverManager.getConnection("jdbc:sqlite:courses.db");
            PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, userId);
             try (ResultSet rs = ps.executeQuery()) {

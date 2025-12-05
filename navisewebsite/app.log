@@ -1,0 +1,41 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.7)
+
+2025-12-04T19:19:52.323-06:00  INFO 99327 --- [navisewebsite] [           main] c.e.n.NavisewebsiteApplication           : Starting NavisewebsiteApplication v0.0.1-SNAPSHOT using Java 25 with PID 99327 (/Users/nsm2004/Desktop/Tulane/SoftwareStudio/Navise-CMPS-3300---Software-Studio-F25/navisewebsite/target/navisewebsite-0.0.1-SNAPSHOT.jar started by nsm2004 in /Users/nsm2004/Desktop/Tulane/SoftwareStudio/Navise-CMPS-3300---Software-Studio-F25/navisewebsite)
+2025-12-04T19:19:52.324-06:00 DEBUG 99327 --- [navisewebsite] [           main] c.e.n.NavisewebsiteApplication           : Running with Spring Boot v3.5.7, Spring v6.2.12
+2025-12-04T19:19:52.324-06:00  INFO 99327 --- [navisewebsite] [           main] c.e.n.NavisewebsiteApplication           : No active profile set, falling back to 1 default profile: "default"
+2025-12-04T19:19:52.654-06:00  INFO 99327 --- [navisewebsite] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-12-04T19:19:52.663-06:00  INFO 99327 --- [navisewebsite] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-04T19:19:52.664-06:00  INFO 99327 --- [navisewebsite] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.48]
+2025-12-04T19:19:52.673-06:00  INFO 99327 --- [navisewebsite] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-04T19:19:52.673-06:00  INFO 99327 --- [navisewebsite] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 331 ms
+2025-12-04T19:19:52.712-06:00  INFO 99327 --- [navisewebsite] [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page template: index
+2025-12-04T19:19:52.740-06:00 DEBUG 99327 --- [navisewebsite] [           main] s.w.s.m.m.a.RequestMappingHandlerMapping : 27 mappings in 'requestMappingHandlerMapping'
+2025-12-04T19:19:52.760-06:00 DEBUG 99327 --- [navisewebsite] [           main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2025-12-04T19:19:52.766-06:00 DEBUG 99327 --- [navisewebsite] [           main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-12-04T19:19:52.788-06:00 DEBUG 99327 --- [navisewebsite] [           main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-12-04T19:19:52.808-06:00  WARN 99327 --- [navisewebsite] [           main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2025-12-04T19:19:52.815-06:00  INFO 99327 --- [navisewebsite] [           main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-12-04T19:19:52.820-06:00 ERROR 99327 --- [navisewebsite] [           main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+

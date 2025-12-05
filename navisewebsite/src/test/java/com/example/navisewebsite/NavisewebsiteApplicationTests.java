@@ -1,8 +1,10 @@
 package com.example.navisewebsite;
 
 import com.example.navisewebsite.domain.Course;
-import com.example.navisewebsite.repository.DatabaseUtil;
+import com.example.navisewebsite.repository.TestDatabaseConfig;
 import com.example.navisewebsite.service.AdminCourseService;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,19 +17,22 @@ public class NavisewebsiteApplicationTests {
 
     private AdminCourseService adminCourseService;
 
+    @BeforeAll
+    public static void setUpAll() {
+        // Initialize in-memory test databases once for all tests
+        TestDatabaseConfig.initializeTestDatabases();
+    }
+
+    @AfterAll
+    public static void tearDownAll() {
+        // Close test databases after all tests
+        TestDatabaseConfig.closeTestDatabases();
+    }
+
     @BeforeEach
     void setup() {
-        // Clear tables for each test to ensure clean state
-        DatabaseUtil.clearUsersTable();
-        try (java.sql.Connection conn = DatabaseUtil.connect();
-             java.sql.Statement stmt = conn.createStatement()) {
-            stmt.execute("TRUNCATE TABLE courses RESTART IDENTITY CASCADE");
-            stmt.execute("TRUNCATE TABLE programs RESTART IDENTITY CASCADE");
-            stmt.execute("TRUNCATE TABLE program_courses RESTART IDENTITY CASCADE");
-            stmt.execute("TRUNCATE TABLE ntc_requirements RESTART IDENTITY CASCADE");
-        } catch (java.sql.SQLException e) {
-            e.printStackTrace();
-        }
+        // Clear all data before each test for test isolation
+        TestDatabaseConfig.clearAllData();
         adminCourseService = new AdminCourseService(
             new com.example.navisewebsite.repository.CourseRepository(),
             new com.example.navisewebsite.repository.ProgramRepository()

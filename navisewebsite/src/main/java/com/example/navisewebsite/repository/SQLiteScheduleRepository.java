@@ -19,13 +19,12 @@ public class SQLiteScheduleRepository {
      * SQLite implementation of ScheduleCourseRepository.
      */
     public static class SQLiteCourseRepository implements ScheduleRepositoryInterfaces.ScheduleCourseRepository {
-        // PostgreSQL connection details (update as needed)
-    private static final String DB_URL = "jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway";
-    private static final String DB_USER = "postgres";
-    private static final String DB_PASSWORD = "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp";
+        // SQLite connection details
+        private static final String COURSES_DB_URL = "jdbc:sqlite:courses.db";
+        private static final String STUDENT_INFO_DB_URL = "jdbc:sqlite:student_info.db";
 
         private Connection connect() throws SQLException {
-            return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            return DriverManager.getConnection(COURSES_DB_URL);
         }
         
         @Override

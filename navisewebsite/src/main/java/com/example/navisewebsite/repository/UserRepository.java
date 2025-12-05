@@ -97,7 +97,7 @@ public class UserRepository {
     private int addUser(String email, String hashedPassword, String firstName, String lastName, String userType) {
         String sql = "INSERT INTO users (email, password, first_name, last_name, user_type) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseUtil.connectUsers();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, email);
             pstmt.setString(2, hashedPassword);
             pstmt.setString(3, firstName);
@@ -109,10 +109,13 @@ public class UserRepository {
                 return -1;
             }
 
-            // Get the generated user_id
-            ResultSet generatedKeys = pstmt.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                return generatedKeys.getInt(1);
+            // Get the last inserted user_id by querying the same connection
+            String lastIdSql = "SELECT last_insert_rowid() as user_id";
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(lastIdSql)) {
+                if (rs.next()) {
+                    return rs.getInt("user_id");
+                }
             }
         } catch (SQLException e) {
             // Check for unique constraint violation (duplicate email)

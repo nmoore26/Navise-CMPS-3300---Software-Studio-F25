@@ -20,7 +20,7 @@ public class CourseRepository implements CourseRepositoryInterface {
                 terms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);
             """;
            
-        try (Connection conn = DatabaseUtil.connect();
+    try (Connection conn = DatabaseUtil.connectCourses();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, course.get_courseID());
@@ -49,7 +49,7 @@ public class CourseRepository implements CourseRepositoryInterface {
     public void removeCourse(Course course) {
         String sqlDeleteProgramCourses = "DELETE FROM program_courses WHERE course_id = ?";
         String sqlDeleteCourse = "DELETE FROM courses WHERE course_id = ?";
-        try (Connection conn = DatabaseUtil.connect();
+    try (Connection conn = DatabaseUtil.connectCourses();
              PreparedStatement pstmt1 = conn.prepareStatement(sqlDeleteProgramCourses);
              PreparedStatement pstmt2 = conn.prepareStatement(sqlDeleteCourse)) {
             pstmt1.setString(1, course.get_courseID());
@@ -64,7 +64,7 @@ public class CourseRepository implements CourseRepositoryInterface {
 
     public Optional<Course> findById(String courseID) {
         String sql = "SELECT * FROM courses WHERE course_id = ?";
-        try (Connection conn = DatabaseUtil.connect();
+    try (Connection conn = DatabaseUtil.connectCourses();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, courseID);
@@ -84,7 +84,7 @@ public class CourseRepository implements CourseRepositoryInterface {
     public List<Course> findAll() {
         List<Course> courses = new ArrayList<>();
         String sql = "SELECT * FROM courses";
-        try (Connection conn = DatabaseUtil.connect();
+    try (Connection conn = DatabaseUtil.connectCourses();
              Statement stmt = conn.createStatement()) {
 
             ResultSet rs = stmt.executeQuery(sql);
@@ -101,7 +101,7 @@ public class CourseRepository implements CourseRepositoryInterface {
     // Count courses for seeder check
     public int countCourses() {
         String sql = "SELECT COUNT(*) AS c FROM courses";
-        try (Connection conn = DatabaseUtil.connect();
+    try (Connection conn = DatabaseUtil.connectCourses();
              Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery(sql);
             if (rs.next()) return rs.getInt("c");
@@ -130,7 +130,7 @@ public class CourseRepository implements CourseRepositoryInterface {
                 time, building, room, attributes, prerequisites, corequisites,
                 terms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);
             """;
-        try (Connection conn = DatabaseUtil.connect();
+    try (Connection conn = DatabaseUtil.connectCourses();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, courseId);
             pstmt.setString(2, courseName);
@@ -147,7 +147,10 @@ public class CourseRepository implements CourseRepositoryInterface {
             pstmt.setString(13, terms == null ? "" : terms);
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            // Silently ignore duplicate key errors (course already exists)
+            if (!e.getMessage().contains("UNIQUE constraint failed") && !e.getMessage().contains("PRIMARY KEY")) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -184,7 +187,7 @@ public class CourseRepository implements CourseRepositoryInterface {
     public void addNTCRequirement(String requirement, int num) {
         String sql = "INSERT INTO ntc_requirements (ntc_requirement, num_classes) VALUES (?, ?)";
 
-        try (Connection conn = DatabaseUtil.connect();
+    try (Connection conn = DatabaseUtil.connectCourses();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, requirement);

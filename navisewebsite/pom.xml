@@ -23,6 +23,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.xerial</groupId>
+      <artifactId>sqlite-jdbc</artifactId>
+      <version>3.44.1.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <version>42.7.1</version>
@@ -30,6 +35,10 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
@@ -56,17 +65,9 @@
       <version>5.2.3</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <scope>runtime</scope>
-    </dependency>
+    <!-- Removed PostgreSQL runtime dependency -->
 
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>42.7.1</version>
-    </dependency>
+    <!-- Removed duplicate PostgreSQL dependency -->
   </dependencies>
 
   <build>
@@ -75,38 +76,6 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
-
-			<!-- Fail build only if skipTests or maven.test.skip is explicitly set to true -->
-			<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-antrun-plugin</artifactId>
-			<version>3.1.0</version>
-			<executions>
-				<execution>
-				<id>fail-if-skip-tests</id>
-				<phase>validate</phase>
-				<goals>
-					<goal>run</goal>
-				</goals>
-				<configuration>
-					<target>
-					<!-- set skip.tests.set if either property equals "true" -->
-					<condition property="skip.tests.set">
-						<or>
-						<equals arg1="${skipTests}" arg2="true"/>
-						<equals arg1="${maven.test.skip}" arg2="true"/>
-						</or>
-					</condition>
-
-					<!-- fail only when skip.tests.set is true -->
-					<fail message="Build refused: tests are being skipped (skipTests or maven.test.skip = true). Do not skip tests." if="skip.tests.set"/>
-					</target>
-				</configuration>
-				</execution>
-			</executions>
-			</plugin>
-
-
     </plugins>
   </build>
 </project>

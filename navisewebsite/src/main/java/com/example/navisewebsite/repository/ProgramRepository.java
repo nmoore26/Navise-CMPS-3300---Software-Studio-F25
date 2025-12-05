@@ -15,7 +15,7 @@ public class ProgramRepository {
     public int addProgram(String programName, String programType) {
         int programId = -1;
 
-        try (Connection conn = DatabaseUtil.connect()) {
+        try (Connection conn = DatabaseUtil.connectCourses()) {
             // First, check if the program already exists
             String querySql = "SELECT program_id FROM programs WHERE program_name = ? AND program_type = ?";
             try (PreparedStatement queryStmt = conn.prepareStatement(querySql)) {
@@ -31,15 +31,18 @@ public class ProgramRepository {
 
             // Program doesn't exist, insert it
             String insertSql = "INSERT INTO programs(program_name, program_type) VALUES (?, ?)";
-            try (PreparedStatement pstmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
                 pstmt.setString(1, programName);
                 pstmt.setString(2, programType);
                 pstmt.executeUpdate();
-
-                // Get the generated program_id
-                ResultSet generatedKeys = pstmt.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    programId = generatedKeys.getInt(1);
+            }
+            
+            // Get the last inserted program_id using SQLite's last_insert_rowid()
+            String lastIdSql = "SELECT last_insert_rowid() as program_id";
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(lastIdSql)) {
+                if (rs.next()) {
+                    programId = rs.getInt("program_id");
                 }
             }
 
@@ -52,7 +55,7 @@ public class ProgramRepository {
 
     // Link a course to a program only if not already linked
     public void addCourseToProgram(int programId, String courseID) {
-        try (Connection conn = DatabaseUtil.connect()) {
+    try (Connection conn = DatabaseUtil.connectCourses()) {
             // Check if the course is already linked to this program
             String checkSql = "SELECT COUNT(*) FROM program_courses WHERE program_id = ? AND course_id = ?";
             try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
@@ -80,7 +83,7 @@ public class ProgramRepository {
 
     // Remove a program by name
     public void removeProgram(String programName) {
-        try (Connection conn = DatabaseUtil.connect()) {
+    try (Connection conn = DatabaseUtil.connectCourses()) {
             // First, delete all course associations for this program
             String deleteCoursesSql = "DELETE FROM program_courses WHERE program_id = (SELECT program_id FROM programs WHERE program_name = ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(deleteCoursesSql)) {

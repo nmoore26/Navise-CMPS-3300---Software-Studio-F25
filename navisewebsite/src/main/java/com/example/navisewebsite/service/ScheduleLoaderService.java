@@ -14,10 +14,9 @@ import java.util.Map;
  */
 public class ScheduleLoaderService {
     
-    // PostgreSQL connection details (update as needed)
-    private static final String DB_URL = "jdbc:postgresql://tramway.proxy.rlwy.net:45308/railway";
-    private static final String DB_USER = "postgres";
-    private static final String DB_PASSWORD = "ECRzrnCljFHfGvFVvPZmJVlSuCfsCnLp";
+    // SQLite connection details
+    private static final String COURSES_DB_URL = "jdbc:sqlite:courses.db";
+    private static final String STUDENT_INFO_DB_URL = "jdbc:sqlite:student_info.db";
     
     /**
      * Load a student's schedule from database, grouped by semester.
@@ -33,7 +32,7 @@ public class ScheduleLoaderService {
         
         Map<String, SemesterPlan> semesterMap = new LinkedHashMap<>();
         
-        try (Connection conn = connect();
+        try (Connection conn = connectSQLite();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, userId);
             
@@ -65,8 +64,8 @@ public class ScheduleLoaderService {
         return plan;
     }
     
-    private Connection connect() throws SQLException {
-    return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+    private Connection connectSQLite() throws SQLException {
+        return DriverManager.getConnection(COURSES_DB_URL);
     }
     
     /**
@@ -81,7 +80,7 @@ public class ScheduleLoaderService {
         
         Map<String, SemesterPlan> semesterMap = new LinkedHashMap<>();
         
-        try (Connection conn = connect();
+        try (Connection conn = connectSQLite();
              PreparedStatement ps = conn.prepareStatement(alt)) {
             ps.setString(1, userId);
             
